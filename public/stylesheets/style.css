@@ -1,0 +1,71 @@
+body {
+  padding: 50px;
+  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+}
+
+a {
+  color: #00B7FF;
+}
+.sidebar-box{
+	background:#FFF;color:#00ffde;
+	width:200px; 
+	padding:10px;
+	float: left;
+}
+
+#enter_ul #line_ul #db_ul{
+	text-decoration: underline;
+	display: block;
+	list-style-type: circle;
+	list-style-position: outside;
+	vertical-align: text-bottom;
+	width: auto;
+	padding-left: 10px;
+	margin-top: auto;
+	margin-right: auto;
+	margin-bottom: auto;
+	margin-left: auto;
+	}
+.sidebar-box  li{
+	list-style: circle;
+	float: none;
+	width: auto;
+	background: #0d3f52;
+}
+.sidebar-box li:hover{ 
+/*background: -moz-linear-gradient(top, #fff, #3E4245 2% ,#555D5F 80%,#555D5F 100%); 
+background: -webkit-gradient(linear, 0 0, 0 100%, from(#fff), color-stop(2%, #3E4245), color-stop(80%, #3E4245),to(#555D5F));*/
+background:#3E4245; 
+-moz-transition: background 1s ease-out; 
+-webkit-transition: background 1s ease-out; 
+}
+#enter_ul .enter_ul_grade1{
+	margin-left:10px;
+}
+#enter_ul .enter_ul_grade2{
+	margin-left:20px;
+}
+#enter_ul .enter_ul_grade3{
+	margin-left:30px;
+}
+#enter_ul .enter_ul_grade4{
+	margin-left:40px;
+}
+#enter_ul .enter_ul_grade5{
+	margin-left:50px;
+}
+#line_ul .ssid_ul_grade1{
+	margin-left:10px;
+}
+#line_ul .ssid_ul_grade1{
+	margin-left:20px;
+}
+
+.content_page{
+	display: inline-block;
+	float: left;
+}
+
+table .td_name{
+	background:#606; 
+}

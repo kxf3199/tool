@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= title %></title>    
+    <link rel='stylesheet' href='/stylesheets/nav.css' />
+    <link rel='stylesheet' href='/stylesheets/style.css' />
+    <style type="text/css">
+      body {
+       padding: 10px;}       
+    </style>
+    <script type="text/javascript">
+    function init(){
+      //var json= '<%- locals.ssids %>';
+        var ssids= '<%- JSON.stringify(ssids) %>';
+        ssids=JSON.parse(ssids);
+        console.log(ssids);
+        var ul=document.getElementById("line_ul");
+        create_li(ssids,ul,1);
+    };
+
+function create_li(sons,ul,n){
+	var bSameWulxl=false;
+    for (var i = 0; i < sons.length; i++) {
+    	var wulxl_li=document.getElementById("wulxl_"+sons[i].wulxl);
+    	if (wulxl_li) {
+    		//var bHasChild=wulxl_li.children.length?true:false;    		
+    		var son_ul=wulxl_li.getElementsByTagName("ul")[0];
+    		if (son_ul) {
+    			var ele_li=document.createElement("li");
+		        //ele_li.setAttribute("class","ssid_grade"+n);
+		        ele_li.setAttribute("onclick","test()");
+		        ele_li.innerHTML=sons[i].ssid_name;
+		        son_ul.appendChild(ele_li);
+    		}else{
+    			son_ul=document.createElement("ul");
+    			son_ul.setAttribute("class","ssid_ul_grade"+n);
+    			var ele_li=document.createElement("li");
+    			ele_li.setAttribute("onclick","test()");
+		        ele_li.innerHTML=sons[i].ssid_name;
+		        son_ul.appendChild(ele_li);
+		        wulxl_li.appendChild(son_ul);
+    		}
+    	}else{
+    		var wulxl_li=document.createElement("li");
+    		wulxl_li.setAttribute("ID","wulxl_"+sons[i].wulxl);
+    		wulxl_li.setAttribute("onclick","test()");
+    		wulxl_li.innerHTML=sons[i].wulxl_name;
+		    ul.appendChild(wulxl_li);
+		    var son_ul=document.createElement("ul");
+    		son_ul.setAttribute("class","ssid_ul_grade"+n);
+    		var ele_li=document.createElement("li");
+    		ele_li.setAttribute("onclick","test()");
+		    ele_li.innerHTML=sons[i].ssid_name;
+		    son_ul.appendChild(ele_li);
+		    wulxl_li.appendChild(son_ul);
+    	}    	
+    }
+};
+  function test()
+  {
+    alert(this);
+    event.stopPropagation();
+  }
+  </script>
+  </head>  
+  <body onload="init()">	
+  <%include nav %>	
+	<div class="sidebar-box">
+  <ul id="line_ul">   
+  </ul> 
+</div>
+
+  </body>
+</html>
+<script type="text/javascript" src="/javascripts/vue.min.js"></script>

@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= title %></title>    
+    <link rel='stylesheet' href='/stylesheets/nav.css' />
+    <link rel='stylesheet' href='/stylesheets/style.css' />
+    <script type="text/javascript" src="/socket.io/socket.io.js"></script>
+	<script type="text/javascript" src="/javascripts/jquery-3.2.1.min.js"></script>
+    <style type="text/css">
+      html,body{margin: 0;padding:0}
+		a:focus {outline: none;}
+		/* 通用表格显示 */
+		table, th, td {font: 12px Arial,Helvetica,sans-serif,'宋体';margin: 0;padding: 0}
+		table{border-spacing: 0;border-collapse: collapse;}
+		.datatable {width: 100%;border-style: none;background-color: #fff;margin-bottom: 20px;text-align: left;}
+		.datatable th, .datatable td { padding: 5px;line-height: 30px}
+		.datatable thead th {background-color: #eee;margin: 0;text-align: left;border-top: 1px solid #cfcfcf;border-bottom: 1px solid #cfcfcf;font-weight: 500}
+		.datatable tbody td {background-color: #fff;border-bottom: 1px solid #ddd;table-layout:fixed;word-break:break-all;font-weight: 400}
+		.datatable tbody tr.evenrow td {background-color: #f4f4f4;}
+		.datatable tfoot td {background-color: #fafafa;text-align: right;border-bottom: 1px solid #cfcfcf;}
+		/*表格分页列表*/
+		.datatable td.paging a {border: 1px solid #eee; color: #444; margin: 4px; padding: 2px 7px; text-decoration: none; text-align:center;}
+		/*表格分页当前页*/
+		.datatable td.paging a.current {background: #eee; border: 1px solid #CFCFCF; color: #444; font-weight: bold;}
+		.datatable td.paging a.current{border: 0;cursor: auto;background:none}      
+    </style>
+    <script type="text/javascript">           
+       var socket= io('http://localhost:80');
+       var cs;
+    	socket.on('message',function(msg){
+	        alert(msg);
+    	});
+    	socket.on('post-welddata',function(data){
+    		if (!cs) {
+    			$("#wait-info").hide();
+    			$("#process-table").show();
+    			cs = new table({
+			    "tableId":"uo_weld",  //必须
+			    "headers":["序号","焊缝名称","经度","纬度","高程","埋深","里程","前钢管","后钢管"],  //必须
+			    "data":data,    //必须
+			    "displayNum": 20,  //必须  默认 10
+			    "groupDataNum":10 //可选  默认 10
+				});
+    		}else{
+    			appendDataToTable(cs,data,function(err,tableobj){
+    				if (err) 
+    					console.log(err);
+    			})
+    		}
+	      
+    	});
+    
+      	function init(){
+	      //var json= '<%- locals.ssids %>';
+	      $("#process-table").hide();
+	        socket.emit('get-welddata');
+
+	        
+	    };
+
+	    function getfilepath(obj){
+	    	//var obj=$("#file-id");
+	    	if (obj) {
+	    		if (window.navigator.userAgent.indexOf("MSIE")>=1) {
+	    			obj.select();
+	    			return document.selection.createRange().text;
+	    		}else if (window.navigator.userAgent.indexOf("Firefox")>=1) {
+	    			if(obj.files)
+	    			{
+	    				return obj.files.item(0).getAsDataURL();
+	    			}
+	    			return obj.value;
+	    		}
+	    		return obj.value;
+	    	}
+	    }
+	     function readExcel(ev){
+	    	var filepath=getfilepath(ev);
+
+	    }
+	    $("#file-id").on("onchange",function(){
+	    	var fd=new FormData();
+	    	fd.append("upfile",$("#file-id").get(0).files[0]);
+	    	$.ajax({
+	    		url:"/pipedata-weld",
+	    		type:"POSE",
+	    		processData:false,
+	    		contentType:false,
+	    		data:fd,
+	    		success:function(d){
+	    			console.log(d);
+	    		}
+	    	});
+	    });
+    </script>
+   </head>  
+  <body onload="init()">	
+  <%include nav %>	
+  	<div id="wait-info">
+	<span>正在加载数据中，请稍候！</span>
+  	</div>
+  	<div id="process-table">
+		<input type="file" id="file-id" name="in_file">
+  	</div>
+	<div class="uo_table">
+	<table id="uo_weld" class="datatable"></table>
+	</div>	
+  </body>
+  
+    <script type="text/javascript" src="/javascripts/table-page.js"></script>
+	
+</html>

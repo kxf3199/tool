@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html"; charset="utf-8">   
+    <title><%= title %></title>    
+    <link rel='stylesheet' href='/stylesheets/nav.css' />
+    <link rel='stylesheet' href='/stylesheets/style.css' />
+    <script type="text/javascript" src="/javascripts/vue.min.js"></script>
+    <script type="text/javascript" src="/javascripts/jquery-3.2.1.min.js"></script>
+    <script type="text/javascript" src="/javascripts/jquery.form.js"></script>
+    
+    <style type="text/css">
+      body {
+       padding: 10px;}
+    </style>
+    <script type="text/javascript">
+    var db_config_all;
+     function init(){
+        var json= '<%- JSON.stringify(db_config_all) %>';
+        db_config_all=JSON.parse(json);
+        json= '<%- JSON.stringify(db_config_cur) %>';
+        var db_config_cur=JSON.parse(json);
+        //console.log(db_config_cur);
+        var ul=document.getElementById("db_ul");
+        create_li(db_config_all,ul,1);
+        vue_update(db_config_cur);         
+        $("#dbform").ajaxSubmit(function(data){          
+          console.log(data);
+        }) ;      
+    };
+      function create_li(sons,ul,n){
+      for (var i = 0; i < sons.length; i++) {
+          var ele_li=document.createElement("li");
+          //ele_li.setAttribute("class","enter_li_grade"+n);
+          ele_li.setAttribute("onclick","get_db_info(this)");
+          ele_li.innerHTML=sons[i].name;
+          ul.appendChild(ele_li);          
+      }
+    };
+    function vue_update(data)
+    {
+      vue.db_type=data.db_type;
+      vue.db_name=data.database;
+      vue.user=data.user;
+      vue.password=data.password;
+      vue.ip=data.server;
+      vue.port=data.port;
+          
+    };
+    function get_db_info(ev){
+      //console.log(ev);
+      
+      db_config_all.forEach(function(db){
+        if (db.name==ev.innerHTML) {
+          vue_update(db.config);
+          return;
+          }
+        });
+    };
+    </script>   
+  </head>  
+  <body onload="init()">	
+  <%include nav %>
+  <div class="sidebar-box">
+   <ul id="db_ul">
+  </ul> 
+  </div>
+  <div class="content_page">
+    <div id="dbconfig_page">
+      <form id="dbform" action="/dbconfig" method="post">
+        <span style="color:orange;text-align: left; width:80px;display:inline-block" >数据库类型</span>
+        <input type="text" name="db_type" v-model="db_type"><br>
+        <span style="color:orange;text-align: left; width:80px;display:inline-block" >数据库实例</span>
+        <input type="text" name="db_name" v-model="db_name"><br>
+         <span style="color:orange;text-align: left; width:80px;display:inline-block">登陆名</span>
+        <input type="text" name="user" v-model="user"><br>
+        <span style="color:orange;text-align: left; width:80px;display:inline-block">密码</span>
+        <input type="text" name="password" v-model="password"><br>
+        <span style="color:orange;text-align: left; width:80px;display:inline-block">服务器IP</span>
+        <input type="text" name="ip" v-model="ip"><br>
+        <span style="color:orange;text-align: left; width:80px;display:inline-block">服务器port</span>
+        <input type="text" name="port" v-model="port"><br>
+        <input type="submit" name="func" value="修改" style="float:left;width:50%;">
+        <input type="submit" name="func" value="删除" style="float:left;width:50%;">
+      </form>
+    </div>
+  </div>
+
+
+<script type="text/javascript">
+    var vue=new Vue({
+          el:'#dbconfig_page',
+          data:{
+            db_type:"",
+            db_name:"wepe",
+            user:"cnooc",
+            password:"cnooc2008",
+            ip:"127.0.0.1",
+            port:"1433"
+          }
+        });  
+</script>
+  </body>
+</html>

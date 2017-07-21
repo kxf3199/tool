@@ -1,0 +1,85 @@
+﻿<html>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<head>
+    <link rel='stylesheet' href='/stylesheets/nav.css' />
+    <link rel='stylesheet' href='/stylesheets/style.css' />
+    <script type="text/javascript" src="http://127.0.0.1:2008/agent/html/resafety.js"></script>
+    <script type="text/javascript" src="/javascripts/service_interface.js"></script>
+    <script type="text/javascript" src="/javascripts/func.js"></script>
+<style>
+.div_head{
+	width:auto;
+	height:30px;
+	background:#0F0;
+    display: inline-block; 
+    float:left;
+}
+table{
+	font-size:12px;
+	border-right:1px solid;
+	border-bottom:1px solid;
+	float:left}
+table td{
+	border-left:1px solid;
+	border-top:1px solid;
+	float:none}
+.td_sel_src{
+	background:#F00}
+.td_sel_dst{
+	background:#FF3}
+	
+</style>
+<title>Excel导入工具</title>
+</head>
+<body onLoad="get_table_list() ">
+ <%include nav %>
+<div class="div_head" style="position:relative;">
+<form name="table" enctype="multipart/form-data">
+<span style="width:50px">表名称</span>
+<span style="margin-left:100px;width:18px;overflow:hidden;">
+<select id="table_list" style="width:158px;margin-left:-100px" onChange="this.parentNode.nextSibling.value=this.value">
+<option value="" selected>请选择</option>
+	<option value="t_uo_lp_steel">t_uo_lp_steel</option>
+    <option value="t_uo_lp_weld">t_uo_lp_weld</option>
+    </select>
+</span><input name="box" style="width:140px;position:absolute;left:50px;"/>
+<input type="submit" value="查询"  onClick="get_table_field()"/><span style="float:right"><input type="text" id="file_name"/><input type="button"  value="打开" onClick="get_excel_info()"/></span>
+</form>
+</div>
+
+<div >
+<table width="400px" border="1" id="table_field">
+	<tr>
+    	<th align="center">Fields</th>
+        <th align="center">Title</th>
+        <th align="center">Type</th>
+        <th align="center">Link</th>
+     </tr>
+     <tr>
+    	<td align="center">F_ID</td>
+        <td align="center">序号</td>
+        <td align="center">DWORD</td>
+        <td align="center" onClick="get_dst_td(event)">&nbsp;</td>
+     </tr>
+  </table> 
+</div>
+
+<div  style="float:right;margin-left:10px">
+<table width="200px" border="1" id="excel_field">
+	<tr>
+    <th align="center">列名</th>        
+     </tr>
+     <tr>
+     <td align="center" onClick="get_src_td(event)">名称</td>
+      
+     </tr>
+  </table> 
+</div>
+<div style="float:right"> 
+<span ><input type="button" value="交换"/ onClick="src_dst()"></span><br>
+<span ><input type="button" value="导入"/ onClick="import_db()"></span><br>
+
+</div>
+
+</body>
+</html>

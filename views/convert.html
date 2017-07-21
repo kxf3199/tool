@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html >
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<link rel='stylesheet' href='/stylesheets/nav.css' />
+    <link rel='stylesheet' href='/stylesheets/style.css' />
+<title>坐标转换</title>
+<script type="text/javascript" src="http://127.0.0.1:2008/agent/html/resafety.js"></script>
+ <style type="text/css">
+     body {
+		width:auto;
+       	padding: 10px;
+		height:200px;
+		
+		}
+	#bl_box {
+		float:left;			
+		}
+	#button_box {
+	float: left;
+	width: 80px;
+	vertical-align: middle;
+	}
+	#xy_box {
+		float:left;	
+			
+	}
+	input{
+		width:100px;
+	
+	}
+	#excel_box {
+		float:none;	
+			
+	}
+ #convert_btn {
+	background-attachment: scroll;
+	background-image: url(/images/triangle-right.png);
+	background-repeat: no-repeat;
+	background-position: right center;
+}
+ #box #button_box button {
+	width: 60px;
+	vertical-align: middle;
+	position: relative;
+	alignment-adjust: middle;
+	left: 10px;
+}
+.clear{
+	clear:both;
+}
+}
+ </style>
+ <script type="text/javascript">
+ var bXY=true;
+ 	function convert(){
+		var zbxSel=document.getElementById("zbx");
+		var zbdd=document.getElementById("zbdd");
+		var zbxParam=zbxSel.options[zbxSel.selectedIndex].value;
+		var zbddParam=zbdd.options[zbdd.selectedIndex].value;
+		var mid_lon=document.getElementById("mid_lon").value;
+
+		var service={
+			"service_id": "process_data_tool.convert_coordinate",
+           	"CoordinateType":zbxParam,
+			"DegreeStripType":zbddParam,
+		   		
+		}
+	var callback={
+		"callbackdata": "$callback_data$",
+               "function_name": "callback_convert",
+               "service_id":"page.call_function"
+		
+		}		
+		if(bXY){
+			service.is_bl=false;
+			service.x=document.getElementById("coor_x").value;
+			service.y=document.getElementById("coor_y").value;
+			if (service.y/1000000<1) {
+				var nDegreeStripNumber;
+				if (!isNaN(mid_lon)) {
+					if(zbddParam == "SIX_DEGREE")
+						nDegreeStripNumber=(mid_lon+3.0)/6.0;						
+					else if(zbddParam == "THREE_DEGREE")
+						nDegreeStripNumber=mid_lon/3.0;						
+					else if (zbddParam == "ONE_DOT_FIVE_DEGREE")
+						nDegreeStripNumber=mid_lon/1.5;	
+					service.y=nDegreeStripNumber*1000000+service.y/1.0;					
+				}else{
+					alert("Y坐标没有带号，也没有中心经线，无法转换！");
+					return ;
+				}
+			}
+			
+
+
+		}else{
+			service.is_bl=true;
+			service.lon=document.getElementById("coor_lon").value;
+			service.lat=document.getElementById("coor_lat").value;	
+		
+		}
+		resafety_call(service, callback);
+	}
+	
+	function callback_convert(cbs)
+	{
+		var rsData =cbs.callbackdata;
+		rsData=JSON.parse(rsData);
+		if(bXY){
+			document.getElementById("coor_lon").value=rsData.lon;
+			document.getElementById("coor_lat").value=rsData.lat;					
+		}
+		else{
+			document.getElementById("coor_x").value=rsData.x;
+			document.getElementById("coor_y").value=rsData.y;			
+		}
+		
+	}
+	
+	function convert_excel(){
+		var zbxSel=document.getElementById("zbx");
+		var zbdd=document.getElementById("zbdd");
+		var zbxParam=zbxSel.options[zbxSel.selectedIndex].value;
+		var zbddParam=zbdd.options[zbdd.selectedIndex].value;
+		var service={
+			"service_id": "process_data_tool.convert_coordinate_excel",
+		   	"CoordinateType":zbxParam,
+			"DegreeStripType":zbddParam,	
+		}
+		var callback={
+		"callbackdata": "$callback_data$",
+               "function_name": "callback_convert_excel",
+               "service_id":"page.call_function"
+		
+		}	
+		resafety_call(service, callback);
+
+}
+	function callback_convert_excel(cbs)
+	{
+		var rsData =cbs.callbackdata;
+
+		var b='\\\\';
+		var data=rsData.replace(/\\/g,b);
+		var obj_data=toJson(data);
+		document.getElementById("file_path").value=obj_data.file_path;
+		
+	}
+	function toJson(str){
+	var json=(new Function("return"+str))();
+	return json;
+}
+
+	function judgeType(obj){
+		var parentID=obj.parentNode.id;
+		var btn=document.getElementById("convert_btn");
+		if(parentID=="xy_box")
+		{	
+			bXY=true;
+			btn.style.backgroundImage="url(/images/triangle-right.png)";
+			btn.style.backgroundPosition="right";
+		}
+		else if(parentID=="bl_box")
+		{
+			bXY=false;
+			btn.style.backgroundImage="url(/images/triangle-left.png)";
+			btn.style.backgroundPosition="left";
+		}
+	}
+	function locate(){		
+		var pos={
+			x:document.getElementById("coor_lon").value,
+			y:document.getElementById("coor_lat").value,
+			z:-9999					
+			}
+		if(!pos.x||!pos.y){
+			alert("请先转换成经纬度坐标再定位！");
+			return ;
+		}
+		var service={
+			"service_id": "camera.locate",
+			"pos_pose":pos		   		
+		}		
+		resafety_call(service);
+	}
+	function clearContent(ev){
+		ev.value="";
+	}
+ </script>
+</head>
+
+<body>
+	<%include nav %>
+	<div id="box" >
+        <div class="params">
+            <span>坐标系:</span>
+            <select id="zbx" name="CoordinateType">
+                <option value="BeiJing54">北京54</option>
+                <option value="XiAn80">西安80</option>
+                <option value="WGS84_MINE">WGS84_MINE</option>
+                <option value="GDA94">GDA944</option>        
+            </select>
+            <span>投影坐标度带:</span>
+            <select id="zbdd" name="DegreeStripType">
+                <option value="THREE_DEGREE">3</option>
+                <option value="SIX_DEGREE">6</option>
+                <option value="ONE_DOT_FIVE_DEGREE">1.5</option>   
+            </select>  <br />  
+            <span>中心经线:</span>
+            <input id="mid_lon" type="text"  value="如果没有带号请输入中心经线" onfocus="if(this.value==defaultValue){this.value=''}" onblur="if(this.value==''){this.value=defaultValue}"/><br />
+        </div>
+         <div id="xy_box">    	
+            <span>X</span>
+            <input id="coor_x" type="text" onfocus="judgeType(this)" value=""/><br />
+            <span>Y</span>
+            <input id="coor_y" type="text" onfocus="judgeType(this)" value=""/><br />
+        </div>
+        
+        <div id="button_box">
+            <button name="convert_btn" type="button" id="convert_btn" onclick="convert()" >转换</button><br />    
+            <button type="button" onclick="locate()">定位</button>   
+        </div>
+        <div id="bl_box">    	
+            <span>经度</span>
+            <input id="coor_lon" type="text" onfocus="judgeType(this)" value=""/><br />
+            <span>纬度</span>
+            <input id="coor_lat" type="text" onfocus="judgeType(this)" value=""/><br />
+        </div>
+		<div class="clear"></div>
+       	<div id="excel_box" >
+			<input type="text" id="file_path" style="width:240px;" /><input type="button" style="width:auto;" value="excel文件坐标转换" onClick="convert_excel()"/></span>
+
+
+       	</div>
+        
+     </div>
+</body>
+</html>

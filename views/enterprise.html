@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= title %></title>    
+    <link rel='stylesheet' href='/stylesheets/nav.css' />
+    <link rel='stylesheet' href='/stylesheets/style.css' />
+    <style type="text/css">
+      body {
+       padding: 10px;}       
+    </style>
+    <script type="text/javascript">
+    function init(){
+      //var json= '<%- locals.enter_rs %>';
+        var parentNodes= '<%- JSON.stringify(enter_rs) %>';
+        parentNodes=JSON.parse(parentNodes);
+        console.log(parentNodes);
+        var ul=document.getElementById("enter_ul");        
+        create_li(parentNodes,ul,1);
+    };
+
+function create_li(sons,ul,n){
+    for (var i = 0; i < sons.length; i++) {
+        var ele_li=document.createElement("li");
+        //ele_li.setAttribute("class","enter_li_grade"+n);
+        //ele_li.setAttribute("onclick","test()");
+        ele_li.innerHTML=sons[i].name;
+        ul.appendChild(ele_li);
+        if (sons[i].son) {
+          var ele_ul=document.createElement("ul");
+          ele_ul.setAttribute("class","enter_ul_grade"+n);
+          create_li(sons[i].son,ele_ul,n+1);
+          ele_li.appendChild(ele_ul);
+        }
+    }
+};
+  function test()
+  {
+    alert(this);
+    event.stopPropagation();
+  }
+  </script>
+  </head>  
+  <body onload="init()">	
+  <%include nav %>	
+	<div class="sidebar-box">
+  <ul id="enter_ul">   
+  </ul> 
+  </div>
+
+  </body>
+</html>
+<script type="text/javascript" src="/javascripts/vue.min.js"></script>
