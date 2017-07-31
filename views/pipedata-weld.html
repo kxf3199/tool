@@ -5,7 +5,7 @@
     <link rel='stylesheet' href='/stylesheets/nav.css' />
     <link rel='stylesheet' href='/stylesheets/style.css' />
     <script type="text/javascript" src="/socket.io/socket.io.js"></script>
-	<script type="text/javascript" src="/javascripts/jquery-3.2.1.min.js"></script>
+	<script type="text/javascript" src="/javascripts/jquery/jquery-3.2.1.min.js"></script>
     <style type="text/css">
       html,body{margin: 0;padding:0}
 		a:focus {outline: none;}
@@ -22,7 +22,14 @@
 		.datatable td.paging a {border: 1px solid #eee; color: #444; margin: 4px; padding: 2px 7px; text-decoration: none; text-align:center;}
 		/*表格分页当前页*/
 		.datatable td.paging a.current {background: #eee; border: 1px solid #CFCFCF; color: #444; font-weight: bold;}
-		.datatable td.paging a.current{border: 0;cursor: auto;background:none}      
+		.datatable td.paging a.current{border: 0;cursor: auto;background:none}   
+
+		form{
+			display: block;margin:20px auto;background: #eee;border-radius: 10px;padding: 15px
+		}   
+		.progress{position: relative;;width:400px;border: 1px solid #ddd;padding: 1px;border-radius: 3px;}
+		.bar{background-color: #b4f5b4;width:0%;height: 20px;border-radius: 3px;}
+		.percent{position: absolute;display: inline-block;top:3px;left: 48%;}
     </style>
     <script type="text/javascript">           
        var socket= io('http://localhost:80');
@@ -33,6 +40,7 @@
     	socket.on('post-welddata',function(data){
     		if (!cs) {
     			$("#wait-info").hide();
+    			$("progress").hide();
     			$("#process-table").show();
     			cs = new table({
 			    "tableId":"uo_weld",  //必须
@@ -52,46 +60,100 @@
     
       	function init(){
 	      //var json= '<%- locals.ssids %>';
-	      $("#process-table").hide();
-	        socket.emit('get-welddata');
+	      	$("#process-table").hide();
+	        socket.emit('get-welddata');	      
+	        /*
+	        $("#process-form").on('click','#sub-btn',function(){	        
+	        	var fd=new FormData($("#process-form")[0]);
+		    	var bar=$(".bar");
+		  		var percent=$('.percent');
+		  		var status=$('#status');
+		    	$.ajax({
+			    		url:"/pipedata",
+			    		type:"POST",			    		
+			    		processData:false,
+			    		contentType:false,
+			    		cache:false,
+			    		timeout:100,
+			    		data:fd,
+			    		success:function(d){
+			    			if (d.result=="success") {
+			    				alert("文件上传成功");
+			    			}else if (d.result=="fail") {
+			    				alert("文件上传失败，原因是："+d.reason);
+			    			}
+			    		},
+			    		beforeSend:function(){
+				  			status.empty();
+				  			var percentVal='0%';
+				  			bar.width(percentVal)
+				  			percent.html(percentVal);
+				  		},
+				  		uploadProgress:function(event,position,total,percentComplete){
+				  			var percentVal=percentComplete+'%';
+				  			bar.width(percentVal)
+				  			percent.html(percentVal);
+				  		},
+				  		success:function(){
+				  			var percentVal='100%';
+				  			bar.width(percentVal)
+				  			percent.html(percentVal);
+				  		}
+				  		
+			    		
 
+			    	});
+	        });    
+		*/
 	        
 	    };
-
-	    function getfilepath(obj){
-	    	//var obj=$("#file-id");
-	    	if (obj) {
-	    		if (window.navigator.userAgent.indexOf("MSIE")>=1) {
-	    			obj.select();
-	    			return document.selection.createRange().text;
-	    		}else if (window.navigator.userAgent.indexOf("Firefox")>=1) {
-	    			if(obj.files)
-	    			{
-	    				return obj.files.item(0).getAsDataURL();
-	    			}
-	    			return obj.value;
+	    function fileSelected(){
+	    	//var obj=document.getElementById('file-id');
+	    	var file=document.getElementById('file-id').files[0];
+	    	if (file) {
+	    		var fileSize=0;
+	    		if (file.size>1024*1024) {
+	    			fileSize=(Math.round(file.size*100/(1024*1024))/100).toString()+'MB';
+	    		}else {
+	    			fileSize=(Math.round(file.size*100/1024)/100).toString()+'KB';
 	    		}
-	    		return obj.value;
+	    		$('#fileName').html('Name:'+file.name);
+	    		$('#fileSize').html('Size:'+file.size);
+	    		$('#fileType').html('Type:'+file.type);
 	    	}
 	    }
-	     function readExcel(ev){
-	    	var filepath=getfilepath(ev);
+	    function uploadFile(){
 
+	    	var fd=new FormData(document.getElementById("process-form"));
+	    	//fd.append("fileToUpload",document.getElementById('file-id').files[0]);
+	    	//fd.append("socket",socket);
+	    	var xhr=new XMLHttpRequest();
+	    	//var fd=$('#process-form').getFormData();
+	    	xhr.upload.addEventListener("progress",uploadProgress,false);
+	    	xhr.addEventListener("load",uploadComplete,false);
+	    	xhr.addEventListener("error",uploadFailed,false);
+	    	xhr.addEventListener("abort",uploadCanceled,false);
+	    	xhr.open("POST","/upload");
+	    	xhr.send(fd);
+	    };
+	    function uploadProgress(evt){
+	    	if (evt.lengthComputable) {
+	    		var percentComplete=Math.round(evt.loaded*100/evt.total);
+	    		$('#progressNumber').html(percentComplete.toString()+'1%');
+
+	    	}else{
+	    		$('#progressNumber').html('无法计算');
+	    	}
 	    }
-	    $("#file-id").on("onchange",function(){
-	    	var fd=new FormData();
-	    	fd.append("upfile",$("#file-id").get(0).files[0]);
-	    	$.ajax({
-	    		url:"/pipedata-weld",
-	    		type:"POSE",
-	    		processData:false,
-	    		contentType:false,
-	    		data:fd,
-	    		success:function(d){
-	    			console.log(d);
-	    		}
-	    	});
-	    });
+	    function uploadComplete(evt){
+	    	alert(evt.target.responseText);
+	    }
+	    function uploadFailed(evt){
+	    	alert("文件上传错误");
+	    }
+	    function uploadCanceled(evt){
+	    	alert("上传被用户取消或浏览器断开连接");
+	    }
     </script>
    </head>  
   <body onload="init()">	
@@ -100,11 +162,34 @@
 	<span>正在加载数据中，请稍候！</span>
   	</div>
   	<div id="process-table">
-		<input type="file" id="file-id" name="in_file">
+  		<from id="process-form" enctype="multipart/form-data" method="post" action="/pipedata">
+  			<div class="row">
+				<input type="file" id="file-id" name="file" onchange="fileSelected();">
+  			</div>
+			<div id="fileName"></div>	
+			<div id="fileSize"></div>
+			<div id="fileType"></div>
+			<div class="row">
+				<input type="text" name="test" >
+				<input type="button" id="sub-btn" value="上传" onclick="uploadFile()">	
+			</div>
+			<div id="progressNumber"></div>
+				
+		</from>
+		<!--
+		<div class="progress">
+	  		<div class="bar"></div>
+	  		<div class="percent">0%</div>
+  		</div>
+  		-->
+  	<div id="status"></div>
   	</div>
+  	
+
 	<div class="uo_table">
 	<table id="uo_weld" class="datatable"></table>
 	</div>	
+	<progress></progress>
   </body>
   
     <script type="text/javascript" src="/javascripts/table-page.js"></script>

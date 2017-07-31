@@ -13,6 +13,8 @@ var dbconfig = require('./routes/dbconfig');
 var pipedata = require('./routes/pipedata');
 var exceltool = require('./routes/exceltool');
 var convert = require('./routes/convert');
+var upload=require('./routes/upload');
+var map=require('./routes/map');
 
 var app = express();
 
@@ -39,7 +41,8 @@ app.use('/dbconfig', dbconfig);
 app.use('/pipedata', pipedata);
 app.use('/exceltool', exceltool);
 app.use('/convert', convert);
-
+app.use('/upload',upload);
+app.use('/map',map);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

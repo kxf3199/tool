@@ -1,0 +1,348 @@
+<!DOCTYPE html>  
+<html>  
+<head>  
+<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />  
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />  
+    <link rel='stylesheet' href='/stylesheets/nav.css' />
+    <link rel='stylesheet' href='/stylesheets/style.css' />
+<title><%= title %></title>  
+<style type="text/css">  
+html{height:100%}  
+body{height:100%;margin:0px;padding:0px}  
+#container{height:94%}  
+nav{ 
+margin-bottom:10PX;
+} 
+</style>  
+<script type="text/javascript" src="http://api.map.baidu.com/api?v=2.0&ak=F12db39a34558c17ac3b7d2974ebc16d">
+//v2.0版本的引用方式：src="http://api.map.baidu.com/api?v=2.0&ak=您的密钥"
+//v1.4版本及以前版本的引用方式：src="http://api.map.baidu.com/api?v=1.4&key=您的密钥&callback=initialize"
+</script>
+<script type="text/javascript" src="/javascripts/coordinate_convert.js"></script>
+<script type="text/javascript" src="/javascripts/FileSaver.min.js"></script>
+</head>  
+ 
+<body>  
+<%include nav %>
+<div id="container"></div> 
+<script type="text/javascript"> 
+var map = new BMap.Map("container");          // 创建地图实例  
+var point = new BMap.Point(116.404, 39.915);  // 创建点坐标  
+map.centerAndZoom(point, 14);                 // 初始化地图，设置中心点坐标和地图级别
+var size = new BMap.Size(10, 35);
+map.addControl(new BMap.NavigationControl({type: BMAP_NAVIGATION_CONTROL_SMALL,offset: size,}));
+map.enableScrollWheelZoom();
+
+map.enableInertialDragging();
+
+map.enableContinuousZoom();
+ size = new BMap.Size(55, 40);
+map.addControl(new BMap.CityListControl({
+    anchor: BMAP_ANCHOR_TOP_LEFT,
+    offset: size,
+    // 切换城市之间事件
+    // onChangeBefore: function(){
+    //    alert('before');
+    // },
+    // 切换城市之后事件
+     onChangeAfter:function(e){
+      alert(e);
+       alert('after');
+     }
+}));
+// 定义一个控件类,即function
+  function coorLocate(){
+    // 默认停靠位置和偏移量
+    this.defaultAnchor = BMAP_ANCHOR_TOP_RIGHT;
+    this.defaultOffset = new BMap.Size(10, 10);
+  }
+
+  // 通过JavaScript的prototype属性继承于BMap.Control
+  coorLocate.prototype = new BMap.Control();
+
+  // 自定义控件必须实现自己的initialize方法,并且将控件的DOM元素返回
+  // 在本方法中创建个div元素作为控件的容器,并将其添加到地图容器中
+  coorLocate.prototype.initialize = function(map){
+    // 创建一个DOM元素
+      var div = document.createElement("div");
+
+      var locate_div= document.createElement("div");
+      locate_div.id='locate_div';
+      locate_div.style='position:absolute;top:20px;right:0px;padding:0px; height:30px; line-height:30px; width:240px;;overflow:hidden;display:none;border:1px solid gray;backgroundColor:white;';
+      locate_div.innerHTML="<span>经度:</span> <input id='longitude' type='text' style='width:50px; height:20px;margin:0px;margin-right:10px;' /> <span>纬度:</span> <input id='latitude' type='text' style='width:50px; height:20px;margin:0px;margin-right:10px;' /> <img src='/images/locate.png' style='position: absolute;bottom: 1px;left: 200px;' onclick='theLocation() '>       <img src='/images/close.png' style='position: absolute;top: 1px;right: 1px;' onclick='ctrl_div_show(this.parentNode,false);ctrl_div_show(this.parentNode.parentNode.childNodes[0],true);'>";
+
+      var btnObj=document.createElement("input");
+      btnObj.id="locate_btn"
+      btnObj.type="button";
+      btnObj.value="坐标定位";
+      btnObj.onclick=function(e){
+        this.style.display='none';
+        document.getElementById("locate_div").style.display='block';
+      }
+      /*
+      btnObj.onclick=function(e){
+        this.parentNode.innerHTML="<div id='locate_div' style='padding:0px; height:30px; line-height:30px; width:240px;;overflow:hidden;'>                 <span>经度:</span> <input id='longitude' type='text' style='width:50px; height:20px;margin:0px;margin-right:10px;' /> <span>纬度:</span> <input id='latitude' type='text' style='width:50px; height:20px;margin:0px;margin-right:10px;' /> <img src='/images/locate.png' style='position: absolute;bottom: 1px;left: 200px;' onclick='theLocation() '>       <img src='/images/close.png' style='position: absolute;top: 1px;right: 1px;' onclick='ctrl_div_show(this.parentNode,false)'></div>";
+      };
+      */
+      
+      div.appendChild(btnObj);
+      div.appendChild(locate_div);
+      // 设置样式
+      div.style.cursor = "pointer";
+      div.style.border = "1px solid gray";
+      div.style.backgroundColor = "white";
+
+      // 添加DOM元素到地图中
+      map.getContainer().appendChild(div);
+      // 将DOM元素返回
+      return div;
+  }
+  // 创建控件
+  var coorLocate = new coorLocate();
+  // 添加到地图当中
+  map.addControl(coorLocate);
+//添加地图类型控件
+  map.addControl(new BMap.MapTypeControl({
+    anchor: BMAP_ANCHOR_TOP_LEFT,
+    offset: new BMap.Size(10, 10),
+    // 切换城市之间事件
+    // onChangeBefore: function(){
+    //    alert('before');
+    // },
+    // 切换城市之后事件
+     onChangeAfter:function(e){
+      alert(e);
+       alert('after');
+     }
+}));   
+
+// 定义一个控件类,即function
+  function regionalism(){
+    // 默认停靠位置和偏移量
+    this.defaultAnchor = BMAP_ANCHOR_TOP_RIGHT;
+    this.defaultOffset = new BMap.Size(80, 10);
+  }
+
+  // 通过JavaScript的prototype属性继承于BMap.Control
+  regionalism.prototype = new BMap.Control();
+
+  // 自定义控件必须实现自己的initialize方法,并且将控件的DOM元素返回
+  // 在本方法中创建个div元素作为控件的容器,并将其添加到地图容器中
+  regionalism.prototype.initialize = function(map){
+    var div = document.createElement("div");
+
+      var region_div= document.createElement("div");
+      region_div.id='region_div';
+      region_div.style='position:absolute;top:20px;right:0px;padding:0px; height:30px; line-height:30px; width:170px;;overflow:hidden;display:none;border:1px solid gray;backgroundColor:white;';
+      region_div.innerHTML="<span>行政区域:</span> <input id='region_name' type='text' style='width:50px; height:20px;margin:0px;margin-right:10px;' /> <input type='button' value='获取' style='position: absolute;bottom:1px;right:20px;height:25px' onclick='getCurBoundary(this)'>       <img src='/images/close.png' style='position: absolute;top: 1px;right: 1px;' onclick='ctrl_div_show(this.parentNode,false);ctrl_div_show(this.parentNode.parentNode.childNodes[0],true);'>";
+      var btnObj=document.createElement("input");
+      btnObj.id="region_btn"
+      btnObj.type="button";
+      btnObj.value="行政区域";
+      btnObj.onclick=function(e){
+        this.style.display='none';
+        document.getElementById("region_div").style.display='block';
+      }
+      /*
+      btnObj.onclick=function(e){
+        this.parentNode.innerHTML="<div id='locate_div' style='padding:0px; height:30px; line-height:30px; width:240px;;overflow:hidden;'>                 <span>经度:</span> <input id='longitude' type='text' style='width:50px; height:20px;margin:0px;margin-right:10px;' /> <span>纬度:</span> <input id='latitude' type='text' style='width:50px; height:20px;margin:0px;margin-right:10px;' /> <img src='/images/locate.png' style='position: absolute;bottom: 1px;left: 200px;' onclick='theLocation() '>       <img src='/images/close.png' style='position: absolute;top: 1px;right: 1px;' onclick='function(){ctrl_div_show(this.parentNode,false);}'></div>";
+      };
+      */
+      
+      div.appendChild(btnObj);
+      div.appendChild(region_div);
+      // 设置样式
+      div.style.cursor = "pointer";
+      div.style.border = "1px solid gray";
+      div.style.backgroundColor = "white";
+
+      // 添加DOM元素到地图中
+      map.getContainer().appendChild(div);
+      // 将DOM元素返回
+      return div;
+
+
+
+
+  }
+
+ // 创建控件
+  var regionalism = new regionalism();
+  // 添加到地图当中
+  map.addControl(regionalism);
+
+  
+
+
+
+  function ctrl_div_show(node,show){
+      if (show) 
+      {
+          node.style.display='block';                   
+      }
+      else
+      {
+          node.style.display='none';
+      }
+    };
+
+// 用经纬度设置地图中心点
+  function theLocation(){
+    if(document.getElementById("longitude").value != "" && document.getElementById("latitude").value != ""){
+      map.clearOverlays(); 
+      var new_point = new BMap.Point(document.getElementById("longitude").value,document.getElementById("latitude").value);
+
+
+      setTimeout(function(){
+        var convertor = new BMap.Convertor();
+        var pointArr = [];
+        pointArr.push(new_point);
+        convertor.translate(pointArr, 1, 5, translateCallback)
+    }, 300);
+
+/*
+      var marker = new BMap.Marker(new_point);  // 创建标注
+      map.addOverlay(marker);              // 将标注添加到地图中
+      map.panTo(new_point);    
+      */  
+    }
+  }
+
+//坐标转换完之后的回调函数
+    translateCallback = function (data){
+      if(data.status === 0) {
+        var marker = new BMap.Marker(data.points[0]);
+        map.addOverlay(marker);
+        //var label = new BMap.Label("转换后的百度坐标（正确）",{offset:new BMap.Size(20,-10)});
+        //marker.setLabel(label); //添加百度label
+        map.panTo(data.points[0]);
+      }
+    }
+
+
+function getCurBoundary(ev)
+{
+	var name_input=document.getElementById("region_name");
+	var str_name=name_input.value; 
+	var map_boundary=new BMap.Boundary();
+	var boundary_poins=[];
+  var wt_buf;
+  
+	map_boundary.get(str_name,function(rs){
+		var count = rs.boundaries.length; //行政区域的点有多少个
+        for(var i = 0; i < count; i++){
+            
+            var ply = new BMap.Polygon(rs.boundaries[i], {strokeWeight: 2, strokeColor: "#ff0000"}); //建立多边形覆盖物
+            map.addOverlay(ply);  //添加覆盖物
+            map.setViewport(ply.getPath());    //调整视野            
+           var points=ply.getPath();
+           var bp={};
+           bp.index=i;
+           bp.points=[]; 
+           var ptNum=points.length;
+           wt_buf="Polygon ";
+           wt_buf+=i;
+           wt_buf+="\0"+ptNum+str_name+"\0";
+           for (var j = 0; j < points.length; j++) {
+           		var pt=points[j];           		 
+              var gg_pt=coordtransform.bd09togcj02(pt.lng,pt.lat) ; 
+              var wgs_pt=coordtransform.gcj02towgs84(gg_pt[0],gg_pt[1]);               
+           		bp.points.push(wgs_pt);
+
+              wt_buf+=wgs_pt[0];
+              wt_buf+=",";
+              wt_buf+=wgs_pt[1];
+              wt_buf+=",";
+              wt_buf+="0.000000\n";
+           }
+           saveFileName=str_name+"分界线.txt";
+
+           var file = new File([wt_buf], saveFileName, {type: "text/plain;charset=utf-8"});
+            saveAs(file);
+           boundary_poins.push(bp);         
+        }
+	});
+}
+var gx=[
+[450100,  '南宁市'],
+ [450200,  '柳州市'],
+  [450300 , '桂林市'],
+  [450400  ,'梧州市'],
+  [450500  ,'北海市'],
+  [450600  ,'防城港市'],
+  [450700  ,'钦州市'],
+  [450800  ,'贵港市'],
+  [450900  ,'玉林市'],
+  [451000  ,'百色市'],
+  [451100  ,'贺州市'],
+  [451200  ,'河池市'],
+  [451300  ,'来宾市'],
+  [451400  ,'崇左市']
+  ];
+  //function getProvins(str)
+
+  function writeGX(){
+
+    var file = new File([getGX()], "d:/gxlng/1.txt", {type: "text/plain;charset=utf-8"});
+    saveAs(file);
+
+  }
+  function getGX(){    
+    for (var i = 0; i < gx.length; i++) {
+        var name=gx[i][1];
+        getBoundary(name);
+      }
+
+    
+  }
+
+function getBoundary(name)
+{
+  var str_name=name; 
+  var map_boundary=new BMap.Boundary();
+  var boundary_poins=[];
+  var wt_buf;  
+  map_boundary.get(str_name,function(rs){
+    var count = rs.boundaries.length; //行政区域的点有多少个
+        for(var i = 0; i < count; i++){
+            
+            var ply = new BMap.Polygon(rs.boundaries[i], {strokeWeight: 2, strokeColor: "#ff0000"}); //建立多边形覆盖物
+            map.addOverlay(ply);  //添加覆盖物
+            //map.setViewport(ply.getPath());    //调整视野            
+           var points=ply.getPath();
+ 
+           var ptNum=points.length;
+           wt_buf="Polyline ";
+           wt_buf+=i;
+           wt_buf+=" "+ptNum+" "+str_name+"\n";
+           for (var j = 0; j < points.length; j++) {
+              var pt=points[j];                
+              var gg_pt=coordtransform.bd09togcj02(pt.lng,pt.lat) ; 
+              var wgs_pt=coordtransform.gcj02towgs84(gg_pt[0],gg_pt[1]);   
+              wt_buf+=wgs_pt[0];
+              wt_buf+=",";
+              wt_buf+=wgs_pt[1];
+              wt_buf+=",";
+              wt_buf+="0.000000\n";
+           }
+                   
+        }
+        var saveFileName=str_name+"分界线.txt";
+
+           var file = new File([wt_buf], saveFileName, {type: "text/plain;charset=utf-8"});
+            saveAs(file);
+  });
+  
+}
+
+</script>  
+<!--
+<div>
+	<span>行政区域</span>
+	<input id="region_name" type="text" name="region_name">
+	<button onclick="getCurBoundary(this)">获取</button>
+  <button onclick="writeGX()">获取广西市界线</button>
+</div>
+-->
+</body>  
+</html>
