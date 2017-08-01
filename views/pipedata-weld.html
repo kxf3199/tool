@@ -41,7 +41,7 @@
     		if (!cs) {
     			$("#wait-info").hide();
     			$("progress").hide();
-    			$("#process-table").show();
+    			//$("#process-table").show();
     			cs = new table({
 			    "tableId":"uo_weld",  //必须
 			    "headers":["序号","焊缝名称","经度","纬度","高程","埋深","里程","前钢管","后钢管"],  //必须
@@ -60,7 +60,7 @@
     
       	function init(){
 	      //var json= '<%- locals.ssids %>';
-	      	$("#process-table").hide();
+	      	//$("#process-table").hide();
 	        socket.emit('get-welddata');	      
 	        /*
 	        $("#process-form").on('click','#sub-btn',function(){	        
@@ -107,84 +107,14 @@
 		*/
 	        
 	    };
-	    function fileSelected(){
-	    	//var obj=document.getElementById('file-id');
-	    	var file=document.getElementById('file-id').files[0];
-	    	if (file) {
-	    		var fileSize=0;
-	    		if (file.size>1024*1024) {
-	    			fileSize=(Math.round(file.size*100/(1024*1024))/100).toString()+'MB';
-	    		}else {
-	    			fileSize=(Math.round(file.size*100/1024)/100).toString()+'KB';
-	    		}
-	    		$('#fileName').html('Name:'+file.name);
-	    		$('#fileSize').html('Size:'+file.size);
-	    		$('#fileType').html('Type:'+file.type);
-	    	}
-	    }
-	    function uploadFile(){
-
-	    	var fd=new FormData(document.getElementById("process-form"));
-	    	//fd.append("fileToUpload",document.getElementById('file-id').files[0]);
-	    	//fd.append("socket",socket);
-	    	var xhr=new XMLHttpRequest();
-	    	//var fd=$('#process-form').getFormData();
-	    	xhr.upload.addEventListener("progress",uploadProgress,false);
-	    	xhr.addEventListener("load",uploadComplete,false);
-	    	xhr.addEventListener("error",uploadFailed,false);
-	    	xhr.addEventListener("abort",uploadCanceled,false);
-	    	xhr.open("POST","/upload");
-	    	xhr.send(fd);
-	    };
-	    function uploadProgress(evt){
-	    	if (evt.lengthComputable) {
-	    		var percentComplete=Math.round(evt.loaded*100/evt.total);
-	    		$('#progressNumber').html(percentComplete.toString()+'1%');
-
-	    	}else{
-	    		$('#progressNumber').html('无法计算');
-	    	}
-	    }
-	    function uploadComplete(evt){
-	    	alert(evt.target.responseText);
-	    }
-	    function uploadFailed(evt){
-	    	alert("文件上传错误");
-	    }
-	    function uploadCanceled(evt){
-	    	alert("上传被用户取消或浏览器断开连接");
-	    }
+	    
     </script>
    </head>  
   <body onload="init()">	
   <%include nav %>	
   	<div id="wait-info">
 	<span>正在加载数据中，请稍候！</span>
-  	</div>
-  	<div id="process-table">
-  		<from id="process-form" enctype="multipart/form-data" method="post" action="/pipedata">
-  			<div class="row">
-				<input type="file" id="file-id" name="file" onchange="fileSelected();">
-  			</div>
-			<div id="fileName"></div>	
-			<div id="fileSize"></div>
-			<div id="fileType"></div>
-			<div class="row">
-				<input type="text" name="test" >
-				<input type="button" id="sub-btn" value="上传" onclick="uploadFile()">	
-			</div>
-			<div id="progressNumber"></div>
-				
-		</from>
-		<!--
-		<div class="progress">
-	  		<div class="bar"></div>
-	  		<div class="percent">0%</div>
-  		</div>
-  		-->
-  	<div id="status"></div>
-  	</div>
-  	
+  	</div>  	
 
 	<div class="uo_table">
 	<table id="uo_weld" class="datatable"></table>

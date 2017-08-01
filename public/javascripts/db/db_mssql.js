@@ -142,7 +142,7 @@ sql.execute=function(procedure,params,func){
  * @param {function} func 回调函数 共有两个参数 error:错误消息 recordsets:查询的结果
  */
 sql.queryWithParams=function(sqltext,params,func){
-  console.log(config);
+  //console.log(config);
     try {
         var connection = new mssql.Connection(config, function (err) {
             if(err)
