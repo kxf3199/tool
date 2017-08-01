@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= title %></title>    
+    <link rel='stylesheet' href='/stylesheets/nav.css' />
+    <link rel='stylesheet' href='/stylesheets/style.css' />
+    <script type="text/javascript" src="/javascripts/jquery/jquery-3.2.1.min.js"></script>
+    <style type="text/css">
+      body {
+       padding: 10px;}
+
+.out_table {
+	font-family: verdana,arial,sans-serif;
+	font-size:11px;
+	color:#333333;
+	border-width: 1px;
+	border-color: #666666;
+	border-collapse: collapse;
+}
+.out_table th {
+	border-width: 1px;
+	padding: 8px;
+	border-style: solid;
+	border-color: #666666;
+	background-color: #0000ff;
+}
+.out_table td {
+	border-width: 1px;
+	padding: 8px;
+	border-style: solid;
+	border-color: #00ff00;
+	background-color: #ffffff;
+}
+
+
+    </style>
+    <script type="text/javascript">
+    	function fileSelected(){
+	    	//var obj=document.getElementById('file-id');
+	    	var file=document.getElementById('file-id').files[0];
+	    	if (file) {
+	    		var fileSize=0;
+	    		if (file.size>1024*1024) {
+	    			fileSize=(Math.round(file.size*100/(1024*1024))/100).toString()+'MB';
+	    		}else {
+	    			fileSize=(Math.round(file.size*100/1024)/100).toString()+'KB';
+	    		}
+	    		$('#fileName').html('Name:'+file.name);
+	    		$('#fileSize').html('Size:'+fileSize);
+	    		$('#fileType').html('Type:'+file.type);
+	    	}
+	    }
+	    function uploadFile(){
+	    	/*
+	    	var fd=new FormData(document.getElementById("process-form"));
+	    	//fd.append("fileToUpload",document.getElementById('file-id').files[0]);
+	    	//fd.append("socket",socket);
+	    	var xhr=new XMLHttpRequest();
+	    	//var fd=$('#process-form').getFormData();
+	    	xhr.upload.addEventListener("progress",uploadProgress,false);
+	    	xhr.addEventListener("load",uploadComplete,false);
+	    	xhr.addEventListener("error",uploadFailed,false);
+	    	xhr.addEventListener("abort",uploadCanceled,false);
+	    	xhr.open("POST","/upload");
+	    	xhr.send(fd);
+	    	*/
+	    	
+			 var files = $('#file-id').prop('files');
+			 
+			 var data = new FormData();
+			 data.append('upfile', files[0]);
+			var xhr=new XMLHttpRequest();
+			xhr.upload.addEventListener("progress",uploadProgress,false);
+	    	xhr.addEventListener("load",uploadComplete,false);
+	    	xhr.addEventListener("error",uploadFailed,false);
+	    	xhr.addEventListener("abort",uploadCanceled,false);
+	    	xhr.open("POST","/upload");
+	    	xhr.send(data);
+			 //data.append("socket",socket);
+			/*
+			 $.ajax({
+			  url: '/upload',
+			  type: 'POST',
+			  data: data,
+			  cache: false,
+			  processData: false,
+			  contentType: false
+			 });
+			*/
+
+	    };
+	    function uploadProgress(evt){
+	    	if (evt.lengthComputable) {
+	    		var percentComplete=Math.round(evt.loaded*100/evt.total);
+	    		$('#progressNumber').html(percentComplete.toString()+'%');
+
+	    	}else{
+	    		$('#progressNumber').html('无法计算');
+	    	}
+	    }
+	    function uploadComplete(evt){
+	    	//alert(evt.target.responseText);
+	    	//
+	    	//var el = document.getElementById("excel"); 
+	    	//el.innerHTML=evt.target.responseText;
+	    	//var table=el.getElementsByTagName("table")[0];
+	    	//el.innerHTML='';
+	    	//var el = document.createElement("div");
+	    	//el.innerHTML=evt.target.responseText;
+	    	//var table=el.getElementsByTagName("table")[0];
+	    	document.getElementById("excel").innerHTML=evt.target.responseText;
+	    }
+	    function uploadFailed(evt){
+	    	alert("文件上传错误");
+	    }
+	    function uploadCanceled(evt){
+	    	alert("上传被用户取消或浏览器断开连接");
+	    }
+
+    </script>
+  </head>  
+  <body>	
+  <%include nav %>
+	<div id="process-table">
+	<from id="process-form" enctype="multipart/form-data" method="post" action="/upload">
+		<div class="row">
+		<input type="file" id="file-id" name="file" onchange="fileSelected();">
+		</div>
+	<div id="fileName"></div>	
+	<div id="fileSize"></div>
+	<div id="fileType"></div>
+	<div class="row">
+		<input type="button" id="sub-btn" value="读取" onclick="uploadFile()">	
+	</div>
+	<div id="progressNumber"></div>
+		
+	</from>
+	<!--
+	<div class="progress">
+		<div class="bar"></div>
+		<div class="percent">0%</div>
+	</div>
+	-->
+	<div id="status"></div>
+	</div>
+	<div id="excel"></div>
+  
+  </body>
+</html>
