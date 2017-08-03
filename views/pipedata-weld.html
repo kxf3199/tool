@@ -34,33 +34,39 @@
     <script type="text/javascript">           
        var socket= io('http://localhost:80');
        var cs;
+       var bCreate=false;
+       var tab_data=[];
     	socket.on('message',function(msg){
 	        alert(msg);
     	});
-    	socket.on('post-welddata',function(data){
-    		if (!cs) {
+    	socket.on('post-welddata',function(data){    	
+    		tab_data.push.apply(tab_data,data);
+    		if (!cs) {    			
+    			bCreate=true;
     			$("#wait-info").hide();
     			$("progress").hide();
-    			//$("#process-table").show();
+    			$(".process_data").show();
     			cs = new table({
 			    "tableId":"uo_weld",  //必须
 			    "headers":["序号","焊缝名称","经度","纬度","高程","埋深","里程","前钢管","后钢管"],  //必须
 			    "data":data,    //必须
 			    "displayNum": 20,  //必须  默认 10
 			    "groupDataNum":10 //可选  默认 10
-				});
+				});		
+	      
     		}else{
     			appendDataToTable(cs,data,function(err,tableobj){
     				if (err) 
     					console.log(err);
     			})
     		}
-	      
+    		//console.log(tab_data.length);
+
     	});
     
       	function init(){
 	      //var json= '<%- locals.ssids %>';
-	      	//$("#process-table").hide();
+	      	$(".process_data").hide();
 	        socket.emit('get-welddata');	      
 	        /*
 	        $("#process-form").on('click','#sub-btn',function(){	        
@@ -107,7 +113,23 @@
 		*/
 	        
 	    };
-	    
+	    function find_weld()
+	    {
+	    	var str_weld_name=$("#weld_name")[0].value;
+	    	var weld_obj;
+	    	var nIndex=0;
+	    	while(!weld_obj&&nIndex<tab_data.length){
+	    		if (tab_data[nIndex].name==str_weld_name) {
+	    			weld_obj=tab_data[nIndex];
+	    			cs.init(nIndex,nIndex+cs.displayNum-1);
+	    			break;	    
+	    		}else
+	    			nIndex++;
+	    	}
+	    	if (!weld_obj) {
+	    		alert("找不到焊缝!");
+	    	}
+	    }
     </script>
    </head>  
   <body onload="init()">	
@@ -115,7 +137,11 @@
   	<div id="wait-info">
 	<span>正在加载数据中，请稍候！</span>
   	</div>  	
-
+	<div class="process_data">
+		<span>焊缝：</span>
+		<input id="weld_name" type="text"  value="输入焊缝名称进行搜索..." onfocus="if(this.value==defaultValue){this.value=''}" onblur="if(this.value==''){this.value=defaultValue}"/>
+		<input type="button" value="搜索" onclick="find_weld()">
+	</div>
 	<div class="uo_table">
 	<table id="uo_weld" class="datatable"></table>
 	</div>	
