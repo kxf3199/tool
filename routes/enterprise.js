@@ -9,7 +9,7 @@ function get_enter_info(func)
 {	
 	var rs=[];
 	mssql_hander.initConfigObj(config_db.get_db_cfg());
-	console.log(config_db.get_db_cfg());
+	//console.log(config_db.get_db_cfg());
 	mssql_hander.query('SELECT f_id,f_name,f_parentid FROM t_r_enterprise',function(err,res){
 		if (err) {
 			console.log(err);

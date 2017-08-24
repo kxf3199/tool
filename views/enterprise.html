@@ -4,6 +4,7 @@
     <title><%= title %></title>    
     <link rel='stylesheet' href='/stylesheets/nav.css' />
     <link rel='stylesheet' href='/stylesheets/style.css' />
+    <script type="text/javascript" src="/javascripts/vue.min.js"></script>
     <style type="text/css">
       body {
        padding: 10px;}       
@@ -15,20 +16,24 @@
         parentNodes=JSON.parse(parentNodes);
         console.log(parentNodes);
         var ul=document.getElementById("enter_ul");        
-        create_li(parentNodes,ul,1);
+        create_li("",parentNodes,ul,1);
     };
 
-function create_li(sons,ul,n){
+function create_li(parent,sons,ul,n){
     for (var i = 0; i < sons.length; i++) {
         var ele_li=document.createElement("li");
         //ele_li.setAttribute("class","enter_li_grade"+n);
-        //ele_li.setAttribute("onclick","test()");
+        
+        sons[i].parent_name=parent;
         ele_li.innerHTML=sons[i].name;
+        ele_li.parent_name=sons[i].parent_name;
+        ele_li.setAttribute("class","li_click");
+        ele_li.setAttribute("onclick","vue_update(this)");
         ul.appendChild(ele_li);
         if (sons[i].son) {
           var ele_ul=document.createElement("ul");
           ele_ul.setAttribute("class","enter_ul_grade"+n);
-          create_li(sons[i].son,ele_ul,n+1);
+          create_li(sons[i].name,sons[i].son,ele_ul,n+1);
           ele_li.appendChild(ele_ul);
         }
     }
@@ -38,6 +43,28 @@ function create_li(sons,ul,n){
     alert(this);
     event.stopPropagation();
   }
+  function vue_update(e)
+  {
+    //alert(data);
+    var data={};
+    data.name=e.innerHTML;    
+    data.parent_name=e.parent_name;
+    vue.name=data.name.split('<')[0];
+    vue.lon=data.f_lon;
+    vue.lat=data.f_lat;
+    vue.height=data.f_height;
+    vue.parent_name=data.parent_name;  
+    //return false;
+    if(e&&e.stopPropagation){//非IE
+　　e.stopPropagation();
+　　}
+　　else{//IE
+　　window.event.cancelBubble=true;
+　　}        
+  };
+
+
+
   </script>
   </head>  
   <body onload="init()">	
@@ -46,7 +73,33 @@ function create_li(sons,ul,n){
   <ul id="enter_ul">   
   </ul> 
   </div>
+    <div class="content_page">
+      <div id="enterprise_page">
+          <span style="color:orange;text-align: left; width:80px;display:inline-block" >名称</span>
+          <input type="text" name="enter_name" v-model="name"><br>
+          <span style="color:orange;text-align: left; width:80px;display:inline-block" >经度</span>
+          <input type="text" name="lon" v-model="lon"><br>
+           <span style="color:orange;text-align: left; width:80px;display:inline-block">纬度</span>
+          <input type="text" name="lat" v-model="lat"><br>
+          <span style="color:orange;text-align: left; width:80px;display:inline-block">高程</span>
+          <input type="text" name="height" v-model="height"><br>
+          <span style="color:orange;text-align: left; width:80px;display:inline-block">上级机构</span>
+          <input type="text" name="parent_name" v-model="parent_name"><br>
+    </div>
 
+  </div>
+  <script type="text/javascript">
+    var vue=new Vue({
+          el:'#enterprise_page',
+          data:{
+            name:"",
+            lon:"",
+            lat:"",
+            height:"",
+            parent_name:""
+          }
+        });  
+</script>
   </body>
 </html>
 <script type="text/javascript" src="/javascripts/vue.min.js"></script>
