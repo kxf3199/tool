@@ -122,6 +122,8 @@
 	    		if (tab_data[nIndex].name==str_weld_name) {
 	    			weld_obj=tab_data[nIndex];
 	    			cs.init(nIndex,nIndex+cs.displayNum-1);
+	    			var tr_1=document.getElementsByTagName("tr")[1];
+	    			tr_1.bgColor="red";
 	    			break;	    
 	    		}else
 	    			nIndex++;
