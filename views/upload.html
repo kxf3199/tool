@@ -35,6 +35,9 @@
 
     </style>
     <script type="text/javascript">
+    var selObj=document.createElement("select");
+    		selObj.setAttribute("onchange","changSel()");
+    var selTr=document.createElement("tr");
     	function fileSelected(){
 	    	//var obj=document.getElementById('file-id');
 	    	var file=document.getElementById('file-id').files[0];
@@ -45,9 +48,10 @@
 	    		}else {
 	    			fileSize=(Math.round(file.size*100/1024)/100).toString()+'KB';
 	    		}
-	    		$('#fileName').html('Name:'+file.name);
+	    		//$('#fileName').html('Name:'+file.name);
 	    		$('#fileSize').html('Size:'+fileSize);
 	    		$('#fileType').html('Type:'+file.type);
+	    		$("#sub-btn").show();	    		
 	    	}
 	    }
 	    function uploadFile(){
@@ -108,7 +112,31 @@
 	    	//var el = document.createElement("div");
 	    	//el.innerHTML=evt.target.responseText;
 	    	//var table=el.getElementsByTagName("table")[0];
-	    	document.getElementById("excel").innerHTML=evt.target.responseText;
+	    	document.getElementById("excel").innerHTML=evt.target.responseText;	    	
+				//$("table").append(tr);
+			$("#db").show();
+			//var trObj=document.createElement("tr");
+			$("tbody tr:eq(0)").children().each(function(){
+				var tdObj=document.createElement("td");
+				tdObj.setAttribute("colspan",$(this).attr("colspan"));
+				//tdObj.setAttribute("onclick","updateSel(this)");
+				tdObj.innerHTML=selObj.outerHTML;
+				selTr.appendChild(tdObj);
+			});				
+			$("tbody tr:eq(0)").before(selTr);
+
+	    }
+	    function updateSel(e){
+	    	e.innerHTML=selObj.outerHTML;
+	    }
+	    function changSel(e)
+	    {
+	    	if(e&&e.stopPropagation){//非IE
+		　　e.stopPropagation();
+		　　}
+		　　else{//IE
+		　　window.event.cancelBubble=true;
+　　}        
 	    }
 	    function uploadFailed(evt){
 	    	alert("文件上传错误");
@@ -116,32 +144,177 @@
 	    function uploadCanceled(evt){
 	    	alert("上传被用户取消或浏览器断开连接");
 	    }
+	    function initUpload(){
+	    	$("#sub-btn").hide();
+	    	//$("#db").hide();
+	    	
+	    }
+	    function readDBTable(){
+	    	var strTableName=$("#table_name").attr("value");
+	    	var inputObj=document.getElementById("table_name");
+	    	strTableName=inputObj.value;
+	    	if (strTableName!="undefinded") {
+	    		var data = new FormData();
+				data.append('table_name', strTableName);
+				var xhr=new XMLHttpRequest();
+				xhr.upload.addEventListener("progress",uploadProgress,false);
+		    	xhr.addEventListener("load",readDBComplete,false);
+		    	xhr.addEventListener("error",uploadFailed,false);
+		    	xhr.addEventListener("abort",uploadCanceled,false);
+		    	xhr.open("POST","/upload");
+		    	xhr.send(data);
+
+
+	    		//MyXMLHttpRequest=new MyXMLHttpRequest();
+	    		//MyXMLHttpRequest.send("POST","/upload",strTableName,readDBComplete);
+	    	}
+	    }
+	    function readDBComplete(evt){
+	    	//console.log(evt.target.response);
+	    	var rs=JSON.parse(evt.target.response);
+	    	
+	    	selObj.options.length=0; 
+	    	for (var i = 0; i < rs.length; i++) {
+	    		//添加一个选项 
+				//selObj.add(new Option("文本","值")); //这个只能在IE中有效 
+				selObj.options.add(new Option(rs[i].F_FLD_DESC,rs[i].F_FLD_NAME)); //这个兼容IE与firefox    		
+	    	}
+	    	//console.log(selObj);
+	    	var i=0;
+	    	$(selTr).children().each(function(){	    		
+	    		selObj.selectedIndex=i;
+	    		i++;
+	    		this.firstChild.outerHTML=selObj.outerHTML;
+	    	});
+	    }
+	    function readDBFailed(){
+	    	
+	    }
+	    function readDBCanceled(){
+	    	
+	    }
+
+	    //类的构建定义，主要职责就是新建XMLHttpRequest对象  
+var MyXMLHttpRequest=function(){  
+    var xmlhttprequest;  
+    if(window.XMLHttpRequest){  
+        xmlhttprequest=new XMLHttpRequest();  
+        if(xmlhttprequest.overrideMimeType){  
+            xmlhttprequest.overrideMimeType("text/xml");  
+        }  
+    }else if(window.ActiveXObject){  
+        var activeName=["MSXML2.XMLHTTP","Microsoft.XMLHTTP"];  
+        for(var i=0;i<activeName.length;i++){  
+            try{  
+                xmlhttprequest=new ActiveXObject(activeName[i]);  
+                break;  
+            }catch(e){  
+                         
+            }  
+        }  
+    }  
+      
+    if(xmlhttprequest == undefined || xmlhttprequest == null){  
+        alert("XMLHttpRequest对象创建失败！！");  
+    }else{  
+        this.xmlhttp=xmlhttprequest;  
+    }  
+      
+    //用户发送请求的方法  
+    MyXMLHttpRequest.prototype.send=function(method,url,data,callback,failback){  
+	        if(this.xmlhttp!=undefined && this.xmlhttp!=null){  
+	            method=method.toUpperCase();  
+	            if(method!="GET" && method!="POST"){  
+	                alert("HTTP的请求方法必须为GET或POST!!!");  
+	                return;  
+	            }  
+	            if(url==null || url==undefined){  
+	                alert("HTTP的请求地址必须设置！");  
+	                return ;  
+	            }  
+	            var tempxmlhttp=this.xmlhttp;  
+	            this.xmlhttp.onreadystatechange=function(){  
+	                if(tempxmlhttp.readyState==4){  
+	                    if(temxmlhttp.status==200){  
+	                        var responseText=temxmlhttp.responseText;  
+	                        var responseXML=temxmlhttp.reponseXML;  
+	                        if(callback==undefined || callback==null){  
+	                            alert("没有设置处理数据正确返回的方法");  
+	                            alert("返回的数据：" + responseText);  
+	                        }else{  
+	                            callback(responseText,responseXML);  
+	                        }  
+	                    }else{  
+	                        if(failback==undefined ||failback==null){  
+	                            alert("没有设置处理数据返回失败的处理方法！");  
+	                            alert("HTTP的响应码：" + tempxmlhttp.status + ",响应码的文本信息：" + tempxmlhttp.statusText);  
+	                        }else{  
+	                            failback(tempxmlhttp.status,tempxmlhttp.statusText);  
+	                        }  
+	                    }  
+	                }  
+	            }  
+	           /*   
+	            //解决缓存的转换  
+	            if(url.indexOf("?")>=0){  
+	                url=url + "&t=" + (new Date()).valueOf();  
+	            }else{  
+	                url=url+"?+="+(new Date()).valueOf();  
+	            }  
+	              
+	            //解决跨域的问题  
+	            if(url.indexOf("http://")>=0){  
+	                url.replace("?","&");  
+	                url="Proxy?url=" +url;  
+	            }  
+	            */
+	            this.xmlhttp.open(method,url,true);  
+	              
+	            //如果是POST方式，需要设置请求头  
+	            if(method=="POST"){  
+	                //this.xmlhttp.setRequestHeader("Content-type","application/x-www-four-urlencoded");  
+	            }  
+	            this.xmlhttp.send(data);  
+	    }else{  
+	        alert("XMLHttpRequest对象创建失败，无法发送数据！");  
+	    }  
+	    MyXMLHttpRequest.prototype.abort=function(){  
+	        this.xmlhttp.abort();  
+	    }  
+	  }  
+	}  
 
     </script>
   </head>  
-  <body>	
+  <body onload="initUpload()">	
   <%include nav %>
 	<div id="process-table">
-	<from id="process-form" enctype="multipart/form-data" method="post" action="/upload">
-		<div class="row">
-		<input type="file" id="file-id" name="file" onchange="fileSelected();">
-		</div>
-	<div id="fileName"></div>	
-	<div id="fileSize"></div>
-	<div id="fileType"></div>
-	<div class="row">
-		<input type="button" id="sub-btn" value="读取" onclick="uploadFile()">	
-	</div>
-	<div id="progressNumber"></div>
+		<from id="process-form" enctype="multipart/form-data" method="post" action="/upload">
+			<div class="row">
+				<input type="file" id="file-id" name="file" onchange="fileSelected();">
+				<span id="fileSize"></span>
+				<span id="fileType"></span>
+			</div>
 		
-	</from>
-	<!--
-	<div class="progress">
-		<div class="bar"></div>
-		<div class="percent">0%</div>
-	</div>
-	-->
-	<div id="status"></div>
+			<div class="row">
+				<input type="button" id="sub-btn" value="读取" onclick="uploadFile()">	
+				<span id="progressNumber"></span>
+			</div>
+		
+			
+		</from>
+		<!--
+		<div class="progress">
+			<div class="bar"></div>
+			<div class="percent">0%</div>
+		</div>
+		
+		<div id="status"></div>
+		-->
+		<div class="db" id="db">			
+			<input id="table_name" type="text" value="输入表名称..." onfocus="if(this.value==defaultValue){this.value=''}" onblur="if(this.value==''){this.value=defaultValue}">
+			<button onclick="readDBTable()">读取数据库</button>
+		</div>
 	</div>
 	<div id="excel"></div>
   
