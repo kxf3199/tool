@@ -61,6 +61,7 @@
 			 var files = $('#file-id').prop('files');
 			 
 			 var data = new FormData();
+			data.append('func', 'upfile');
 			 data.append('upfile', files[0]);
 			var xhr=new XMLHttpRequest();
 			xhr.upload.addEventListener("progress",uploadProgress,false);
@@ -134,6 +135,7 @@
 	    	strTableName=inputObj.value;
 	    	if (strTableName!="undefinded") {
 	    		var data = new FormData();
+	    		data.append('func', 'readDB');
 				data.append('table_name', strTableName);
 				var xhr=new XMLHttpRequest();
 				xhr.upload.addEventListener("progress",uploadProgress,false);
@@ -154,7 +156,8 @@
 	    	for (var i = 0; i < rs.length; i++) {
 	    		//添加一个选项 
 				//selObj.add(new Option("文本","值")); //这个只能在IE中有效 
-				selObj.options.add(new Option(rs[i].F_FLD_DESC,rs[i].F_FLD_NAME)); //这个兼容IE与firefox    		
+				selObj.options.add(new Option(rs[i].F_FLD_DESC,rs[i].F_FLD_NAME)); //这个兼容IE与firefox 
+				$(selObj.options[selObj.options.length-1]).attr("dbType",rs[i].F_FLD_TYPE);
 	    	}
 	    	//console.log(selObj);
 	    	var i=0;
@@ -167,7 +170,9 @@
 	    		selObj.options[i].selected=true;
 	    		selObj.options[i].setAttribute("selected","selected");
 	    		i++;
-	    		this.firstChild.outerHTML=selObj.outerHTML;
+	    		if ($(this).attr("id")!=undefined) {
+	    			this.firstChild.outerHTML=selObj.outerHTML;
+	    		};
 	    	});
 	    }
 	    function readDBFailed(){
@@ -178,13 +183,56 @@
 	    }
 	    function importDB()
 	    {
-	    	var i=0;
+	    	var importData={};
+	    	var mapExcel={};
+	    	var mapType={};
+	    	var arrFeature=[];
+	    	var feature={};
 	    	$("tbody tr:eq(0)").children().each(function(){
-	    		var sunSel=this.firstChild;
-	    		var fMap=[];
-	    		var mapObj={};
-	    		var  index=sunSel.selectedIndex;				
-			});			
+	    		var sunSel=this.firstChild;	    		
+	    		var  index=sunSel.selectedIndex;
+	    		var idAttr=$(this).attr("id");	    		
+				if (idAttr!=undefined) {
+					idAttr=idAttr.substring(0,idAttr.length-1)+'1';
+					var nextRow=document.getElementById(idAttr);
+					var vKey=sunSel.options[index].value
+					mapExcel[vKey]=nextRow.innerText;	
+					mapType[vKey]=$(sunSel.options[index]).attr("dbtype");
+				}		    		
+			});	
+			importData["field_excel"]=mapExcel;
+			importData["field_type"]=mapType;
+	    	var nRow=0;
+	    	$("tbody").children().each(function(){
+	    		if (nRow>1) {
+	    			$(this).children().each(function(){
+		    			var idAttr=$(this).attr("id");	    		
+						if (idAttr!=undefined) {
+							idAttr=idAttr.substring(0,idAttr.length-1)+'0';
+							var dbtr=document.getElementById(idAttr);
+							if (dbtr!=undefined) {
+								dbSel=dbtr.firstChild;
+								var  index=dbSel.selectedIndex;
+								feature[dbSel.options[index].value]=this.innerText;
+							}
+						}		    			
+					});	
+					arrFeature.push(feature);	
+	    		}
+	    		nRow++; 
+
+			});	
+	    	importData["features"]=arrFeature;
+	    	var data = new FormData();
+	    		data.append('func', 'upData');
+				data.append('import_data',JSON.stringify(importData));
+				var xhr=new XMLHttpRequest();
+				xhr.upload.addEventListener("progress",uploadProgress,false);
+		    	//xhr.addEventListener("load",readDBComplete,false);
+		    	//xhr.addEventListener("error",uploadFailed,false);
+		    	//xhr.addEventListener("abort",uploadCanceled,false);
+		    	xhr.open("POST","/upload");
+		    	xhr.send(data);
 
 	    }
 	     

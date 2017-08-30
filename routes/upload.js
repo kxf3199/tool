@@ -11,7 +11,8 @@ var mssql_hander=require('./../public/javascripts/db/db_mssql');
 router.post('/',multipartMiddleware,function(req, res, next) {
     //console.log(req.body);
 	//console.log(req.files);
-   if (req.body.table_name!=undefined) {
+   //if (req.body.table_name!=undefined) {
+    if (req.body.func=='readDB') {
         var strTabName=req.body.table_name;
         console.log(strTabName);
         var o={
@@ -20,16 +21,17 @@ router.post('/',multipartMiddleware,function(req, res, next) {
         }
         get_table_info(strTabName,"sqlserver",function(err,rs){
             if (rs) {
-                console.log(rs);
+                //console.log(rs);
                 res.send(rs);
             }else{
-                console.log(rs);
+                //console.log(rs);
                 res.send(err);
 
             }
         })
         
-   }else if (req.files!=undefined) {
+  // }else if (req.body.upfile!=undefined) {
+    }else if (req.body.func=='upfile') {
         //获取上传的文件的文件名和绝对路径,注意先引入fs和path模块
         var oriNameOfFile = req.files.upfile.originalFilename || path.basename(req.files.upfile.ws.path);
         var oriPathOfFile = req.files.upfile.path;
@@ -46,58 +48,13 @@ router.post('/',multipartMiddleware,function(req, res, next) {
         }
         var HTML = xlsx.utils.sheet_to_html(ws,ops); 
         res.end(HTML);
+   //}else if (req.body.import_data!=undefined) {
+   }else if (req.body.func=='upData') {
+        var data=req.body.import_data;
+        console.log(data);
+         res.send("ok");
    }
-	//console.log(req.body.socket);
-   /* //
-	var socket=req.body.socket;
-	console.log(socket);
-	if (socket) {
-		socket.emit('message',"传输完成");
-	}
-    */
-	//将表单中name是name_txt的input元素中的文本内容取出
-    //var txtFromFront = req.body.name_txt;
-
-    
-    //console.log(socket)
-    //console.log(HTML);
-    //console.log(sheetNames);
-
-    /*
-    var exBuf=fs.readFileSync(oriPathOfFile);
-    ejsExcel.getExcelArr(exBuf).then(exlJson=>{
-    console.log("************  read success:getExcelArr");
-    let workBook=exlJson;
-    let workSheets=workBook[0];
-    workSheets.forEach((item,index)=>{
-            console.log((index+1)+" row:"+item.join('    '));
-    })
-}).catch(error=>{
-    console.log("************** had error!");
-    console.log(error);
-});
-*/
-    //读取和输出文件到目标路径
-    /*
-    fs.readFile(oriPathOfFile,function (err, data) {
-		console.log(data);
-    });
-    */
-   
-   //res.render('upload',
-            //{ title: '欢迎使用长输管道工具',HTML:HTML});
-        /*
-        get_weld_info(function(err,welds){
-        //var strweld=JSON.stringify(welds);
-        //var weldBuf=new Buffer(strweld);  
-        //console.log(weldBuf); 
-        res.render('pipedata-weld',
-            { title: '欢迎使用长输管道工具'
-            ,welds:welds});
-        }); 
-        */
-    
- 	//res.end("1");
+	
 });
 
     router.get('/', function(req, res, next) {      
