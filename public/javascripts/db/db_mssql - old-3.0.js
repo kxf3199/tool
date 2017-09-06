@@ -96,10 +96,14 @@ sql.initConfigObj=function(config_obj){
  * @param {function} func 回调函数 共有四个参数 error:错误信息 recordsets:查询的表结果 returnValue:存储过程的返回值 affected:影响的行数
  */
 sql.execute=function(procedure,params,func){
-    new mssql.ConnectionPool(config).connect().then(pool => {
-        // Query
-        const request = pool.request();
-        if (params != null) {
+    try {
+        var connection = new mssql.Connection(config, function (error) {
+            if(error)
+                func(error);
+            else {
+                var request = new mssql.Request(connection);
+                //request.verbose=true;
+                if (params != null) {
                     for (var index in params) {
                         if (params[index].direction == sql.direction.Output) {
                             request.output(index, params[index].sqlType);
@@ -108,27 +112,27 @@ sql.execute=function(procedure,params,func){
                             request.input(index, params[index].sqlType, params[index].inputValue);
                         }
                     }
-        };
-        console.log("execute:procedure"+procedure);
-        return request.execute(procedure)
-    }).then((error, recordsets, returnValue, affected) => {        
-        if (error)
-            func(error);
-        else {
-            for (var index in params) {
-                if (params[index].direction == sql.direction.Output) {
-                    params[index].outputValue = request.parameters[index].value;
                 }
+                request.execute(procedure, function (error, recordsets, returnValue, affected) {
+                    if (error)
+                        func(error);
+                    else {
+                        for (var index in params) {
+                            if (params[index].direction == sql.direction.Output) {
+                                params[index].outputValue = request.parameters[index].value;
+                            }
+                        }
+                        func(error, recordsets, returnValue, affected);
+                    }
+                });
             }
-            func(error, recordsets, returnValue, affected);
-        }
-        mssql.close();
-    }).catch(err => {
-        // ... error checks
-        func(err);
-        mssql.close();
-    });
+        });
 
+        connection.on("error", func);
+
+    }catch(e){
+        func(e);
+    }
 };
 
 /**
@@ -139,29 +143,29 @@ sql.execute=function(procedure,params,func){
  */
 sql.queryWithParams=function(sqltext,params,func){
   //console.log(config);
-      new mssql.ConnectionPool(config).connect().then(pool => {
-        // Query
-        const request = pool.request();
-        if(params){
-            for(var index in params){
-                request.input(index,params[index].sqlType,params[index].inputValue);
+
+    try {
+        var connection = new mssql.connect(config, function (err) {
+            if(err)
+                func(err);
+            else {
+                var request = new mssql.Request(connection);
+                request.multiple=true;
+
+                if(params){
+                    for(var index in params){
+                        request.input(index,params[index].sqlType,params[index].inputValue);
+                    }
+                }
+
+                request.query(sqltext, func);
             }
-        }
-        console.log("queryWithParams:sqltext"+sqltext);
-        return request.query(sqltext)
-    }).then(result => {        
-        func("",result);
-        mssql.close();
-    }).catch(err => {
-        // ... error checks
-        func(err);
-        mssql.close();
-    });
-
-    mssql.on('error', err => {
-        // ... error handler
-    });
-
+        });
+        connection.on("error",func);
+    }catch(e){
+        func(e);
+    }
+    
 };
 
 /**
@@ -170,17 +174,16 @@ sql.queryWithParams=function(sqltext,params,func){
  * @param {function} func 回调函数 共有三个参数 error:错误消息 recordsets:查询的结果 
  */
 sql.query=function(sqltext,func){
-    //console.log("数据库查询模块：查询语句："+sqltext);
+    console.log("数据库查询模块：查询语句："+sqltext);
     sql.queryWithParams(sqltext,null,func);
 };
 sql.createTab=function(tableName)
 {
     console.log("createTab:"+tableName);
     if (tableName) {
-        return new mssql.Table(tableName);
-    }else{        
+        return new new sql.Table(tableName);
+    }else
         return "";
-    }
 }
 /**
  * 执行大批量数据的插入
@@ -197,30 +200,21 @@ sql.createTab=function(tableName)
  */
 sql.bulkInsert=function(table,func){
     try{
-        if (table) {
-            new mssql.ConnectionPool(config).connect().then(pool => {
-            // Query
-                const request = pool.request();
-                console.log("bulkInsert"+table)
-                request.bulk(table, (err, result) => {
-                        // ... error checks 
-                        func(err, result);
-                });
-            }).catch(err => {
-                // ... error checks
-                func(err);
-                mssql.close();
+        if(table){
+            var connection=new mssql.Connection(config,function(err){
+                if(err) func(err)
+                else{
+                    var request=new mssql.Request(connection);
+                    request.bulk(table,func);
+                }
             });
-        }else
+            connection.on("error",func);
+        }
+        else
             func(new ReferenceError('table parameter undefined!'));
     }catch (e){
         func(e);
     }
-
-    mssql.on('error', err => {
-        // ... error handler
-    });
-    mssql.close();
 };
 
 /**
@@ -243,24 +237,29 @@ sql.bulkInsert=function(table,func){
     }
  */
 sql.queryViaStreamWithParams=function(sqltext,params,func){
-    config.stream=true;
-    new mssql.ConnectionPool(config).connect().then(pool => {
-        // Query
-        const request = pool.request();
-        request.stream=true;// You can set streaming differently for each request
-        if(params){
-            for(var index in params){
-                request.input(index,params[index].sqlType,params[index].inputValue);
-            }
-        }
-        //console.log("queryWithParams:sqltext"+sqltext);
-        request.query(sqltext);
-        request.on('recordset',function(columns){
+    try{
+        config.stream=true;
+
+        mssql.connect(config,function(err){
+            if(err)
+                func.error(err);
+            else{
+                var request=new mssql.Request();
+                request.stream=true;// You can set streaming differently for each request
+                if(params){
+                    for(var index in params){
+                        request.input(index,params[index].sqlType,params[index].inputValue);
+                    }
+                }
+
+                request.query(sqltext);
+
+                request.on('recordset',function(columns){
                     //columns是一个JSON对象，表示 返回数据表的整个结构，包括每个字段名称以及每个字段的相关属性
                     //如下所示
                     /*
                     { id:
-                       {index: 0,
+                    { index: 0,
                         name: 'id',
                         length: undefined,
                         type: [sql.Int],
@@ -270,7 +269,7 @@ sql.queryViaStreamWithParams=function(sqltext,params,func){
                         caseSensitive: false,
                         identity: true,
                         readOnly: true },
-                    name:
+                        name:
                         { index: 1,
                             name: 'name',
                             length: 100,
@@ -281,7 +280,7 @@ sql.queryViaStreamWithParams=function(sqltext,params,func){
                             caseSensitive: false,
                             identity: false,
                             readOnly: false },
-                    Pwd:
+                        Pwd:
                         { index: 2,
                             name: 'Pwd',
                             length: 200,
@@ -296,50 +295,46 @@ sql.queryViaStreamWithParams=function(sqltext,params,func){
                     func.columns(columns);
                 });
 
-        request.on('row', function(row) {
-            //row是一个JSON对象，表示 每一行的数据，包括字段名和字段值
-            //如 { id: 1004, name: 'jsw', Pwd: '12345678' }
-            //如果行数较多，会多次进入该方法，每次只返回一行
-            func.row(row);
+                request.on('row', function(row) {
+                    //row是一个JSON对象，表示 每一行的数据，包括字段名和字段值
+                    //如 { id: 1004, name: 'jsw', Pwd: '12345678' }
+                    //如果行数较多，会多次进入该方法，每次只返回一行
+                    func.row(row);
+                });
+
+                request.on('error', function(err) {
+                    //err是一个JSON对象，表示 错误信息
+                    //如下所示：
+                    /*
+                    { [RequestError: Incorrect syntax near the keyword 'from'.]
+                        name: 'RequestError',
+                            message: 'Incorrect syntax near the keyword \'from\'.',
+                        code: 'EREQUEST',
+                        number: 156,
+                        lineNumber: 1,
+                        state: 1,
+                    class: 15,
+                        serverName: '06-PC',
+                        procName: '' }
+                    */
+                    func.error(err);
+                });
+
+                request.on('done', function(affected) {
+                    //affected是一个数值，表示 影响的行数
+                    //如 0
+                    //该方法是最后一个执行
+                    func.done(affected);
+                });
+            }
         });
 
-        request.on('error', function(err) {
-            //err是一个JSON对象，表示 错误信息
-            //如下所示：
-            /*
-            { [RequestError: Incorrect syntax near the keyword 'from'.]
-                name: 'RequestError',
-                    message: 'Incorrect syntax near the keyword \'from\'.',
-                code: 'EREQUEST',
-                number: 156,
-                lineNumber: 1,
-                state: 1,
-            class: 15,
-                serverName: '06-PC',
-                procName: '' }
-            */
-            func.error(err);
-        });
-
-        request.on('done', function(affected) {
-            //affected是一个数值，表示 影响的行数
-            //如 0
-            //该方法是最后一个执行
-            func.done(affected);
-        });
-    }).catch(err => {
-        // ... error checks
-        func(err);
-        mssql.close();
-    }).finally ( ()=>{
+        mssql.on('error',func.error);
+    }catch(e){
+        func.error(e);
+    }finally{
         config.stream=false;
-        mssql.close();
-    });
-    
-    mssql.on('error', err => {
-        // ... error handler
-    });
-
+    }
 };
 
 /**

@@ -22,7 +22,7 @@ data_manage.get_weld_info=function(socket,func){
 			console.log(err);
 			return false;
 		}
-		var recordsets=res[0];
+		var recordsets=res.recordset;
 		var nCount=0;
 		for (var item in recordsets) {			
 			var weld_obj={						
@@ -68,7 +68,7 @@ data_manage.get_pipelod_info=function(func){
 			console.log(err);
 			return false;
 		}
-		var recordsets=res[0];
+		var recordsets=res.recordset;
 		for (var item in recordsets) {			
 			var weld_obj={						
 						"id":recordsets[item].f_id,

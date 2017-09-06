@@ -15,8 +15,8 @@ function get_enter_info(func)
 			console.log(err);
 			return false;
 		}
-		var recordsets=res[0];
-		//console.log(recordsets);
+		var recordsets=res.recordset;
+		//console.log("get_enter_info:"+JSON.stringify(recordsets));
 		for (var item in recordsets) {
 			var enter_obj={
 						"id":recordsets[item].f_id,

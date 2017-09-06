@@ -14,7 +14,7 @@ function get_line_info(func){
 			console.log(err);
 			return;
 		}
-		var recordsets=res[0];
+		var recordsets=res.recordset;
 		//console.log(recordsets);
 		for (var item in recordsets) {
 			var ssid_obj={

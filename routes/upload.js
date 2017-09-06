@@ -7,6 +7,7 @@ var multipartMiddleware=multipart();
 var xlsx=require('xlsx');
 var config_db=require('./../public/javascripts/config.js');
 var mssql_hander=require('./../public/javascripts/db/db_mssql');
+var mssql=require('mssql');
 /* GET home page. */
 router.post('/',multipartMiddleware,function(req, res, next) {
     //console.log(req.body);
@@ -51,8 +52,20 @@ router.post('/',multipartMiddleware,function(req, res, next) {
    //}else if (req.body.import_data!=undefined) {
    }else if (req.body.func=='upData') {
         var data=req.body.import_data;
-        console.log(data);
-         res.send("ok");
+        var dataObj=JSON.parse(data);
+        if (dataObj.table_name==undefined) {
+            res.send("err");
+        }else
+        {
+            console.log(dataObj.table_name);
+            insertDB(dataObj.table_name,dataObj,function(err,rs){
+                console.log(err);
+                console.log(rs);
+            });
+            console.log(data);
+             res.send("ok");
+        }
+        
    }
 	
 });
@@ -110,10 +123,54 @@ function get_table_info(tabName,dbType,func)
             console.log(err);
             return false;
         }
-        var recordsets=res[0];
+        var recordsets=res.recordset;
         //console.log(recordsets)
         func(err,recordsets);
     })
     
+}
+
+function insertDB(tabName,data,func){
+    console.log("insertDB:"+tabName);
+    const table = mssql_hander.createTab(tabName);
+    if (table) {
+        //console.log(table);
+    }else
+    {
+        console.log("table is not create!");
+        func("err");
+
+    }
+    //new mssql.Table('tabName') // or temporary table, e.g. #temptable 
+    table.create = true;
+    data.fields.forEach(function(o,p,q){//分别对应：数组元素，元素的索引，数组本身
+        var colName=o;
+        var colType=data.field_type[colName];
+        if (colType=='numeric'||colType=='decimal'||colType=='smallint'||colType=='int') {
+            colType=mssql.Int;
+        }else if (colType=='varchar'||colType=='char') {
+            colType=mssql.NVarChar;
+        }else if (colType=='datetime'||colType=='date'||colType=='time') {
+            colType=mssql.DateTime;
+        }else if (colType=='binary'||colType=='varbinary') {
+            colType=mssql.VarBinary;
+        }else {
+            colType=mssql.NVarChar;
+        }
+        table.columns.add(colName, colType, {nullable: false})
+    });
+    var features=data.features;
+    features.forEach(function(f,index,fs){//分别对应：数组元素，元素的索引，数组本身
+        var args=[];
+        data.fields.forEach(function(o){
+            args.push(f.o);
+        });
+        table.rows.add(args);
+    });
+    console.log(table);
+    mssql_hander.bulkInsert(table,(err, result) => {
+        // ... error checks  
+        func(err,result);          
+    });
 }
 module.exports = router;

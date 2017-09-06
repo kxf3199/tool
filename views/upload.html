@@ -184,6 +184,10 @@
 	    function importDB()
 	    {
 	    	var importData={};
+	    	var inputObj=document.getElementById("table_name");
+	    	strTableName=inputObj.value;
+	    	importData["table_name"]=strTableName;
+	    	var fields=[];
 	    	var mapExcel={};
 	    	var mapType={};
 	    	var arrFeature=[];
@@ -195,11 +199,13 @@
 				if (idAttr!=undefined) {
 					idAttr=idAttr.substring(0,idAttr.length-1)+'1';
 					var nextRow=document.getElementById(idAttr);
-					var vKey=sunSel.options[index].value
+					var vKey=sunSel.options[index].value;
+					fields.push(vKey);
 					mapExcel[vKey]=nextRow.innerText;	
 					mapType[vKey]=$(sunSel.options[index]).attr("dbtype");
 				}		    		
 			});	
+			importData["fields"]=fields;
 			importData["field_excel"]=mapExcel;
 			importData["field_type"]=mapType;
 	    	var nRow=0;
