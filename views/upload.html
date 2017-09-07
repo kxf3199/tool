@@ -153,11 +153,13 @@
 	    	rs=JSON.parse(evt.target.response);
 	    	
 	    	selObj.options.length=0; 
+	    	selObj.options.add(new Option("丢弃","invalid"));
 	    	for (var i = 0; i < rs.length; i++) {
 	    		//添加一个选项 
 				//selObj.add(new Option("文本","值")); //这个只能在IE中有效 
-				selObj.options.add(new Option(rs[i].F_FLD_DESC,rs[i].F_FLD_NAME)); //这个兼容IE与firefox 
+				selObj.options.add(new Option(rs[i].F_FLD_NAME,rs[i].F_FLD_NAME)); //这个兼容IE与firefox 
 				$(selObj.options[selObj.options.length-1]).attr("dbType",rs[i].F_FLD_TYPE);
+				$(selObj.options[selObj.options.length-1]).attr("dbLength",rs[i].F_LENGTH);
 	    	}
 	    	//console.log(selObj);
 	    	var i=0;
@@ -167,8 +169,8 @@
 	    		}
 	    		if (i>=selObj.options.length) 
 	    			i=0;	    		
-	    		selObj.options[i].selected=true;
-	    		selObj.options[i].setAttribute("selected","selected");
+	    		selObj.options[i+1].selected=true;
+	    		selObj.options[i+1].setAttribute("selected","selected");
 	    		i++;
 	    		if ($(this).attr("id")!=undefined) {
 	    			this.firstChild.outerHTML=selObj.outerHTML;
@@ -188,10 +190,9 @@
 	    	strTableName=inputObj.value;
 	    	importData["table_name"]=strTableName;
 	    	var fields=[];
-	    	var mapExcel={};
-	    	var mapType={};
-	    	var arrFeature=[];
-	    	var feature={};
+	    	//var mapExcel={};
+	    	//var mapType={};
+	    	var arrFeature=[];	    	  	
 	    	$("tbody tr:eq(0)").children().each(function(){
 	    		var sunSel=this.firstChild;	    		
 	    		var  index=sunSel.selectedIndex;
@@ -200,18 +201,26 @@
 					idAttr=idAttr.substring(0,idAttr.length-1)+'1';
 					var nextRow=document.getElementById(idAttr);
 					var vKey=sunSel.options[index].value;
-					fields.push(vKey);
-					mapExcel[vKey]=nextRow.innerText;	
-					mapType[vKey]=$(sunSel.options[index]).attr("dbtype");
+					var field_features={};
+					field_features["name"]=vKey;
+					field_features["type"]=$(sunSel.options[index]).attr("dbtype");
+					field_features["length"]=$(sunSel.options[index]).attr("dbLength");
+					field_features["excel"]=nextRow.innerText;				
+					fields.push(field_features);
+					//mapExcel[vKey]=nextRow.innerText;	
+					//mapType[vKey]=$(sunSel.options[index]).attr("dbtype");
 				}		    		
 			});	
 			importData["fields"]=fields;
-			importData["field_excel"]=mapExcel;
-			importData["field_type"]=mapType;
+			//importData["field_excel"]=mapExcel;
+			//importData["field_type"]=mapType;
 	    	var nRow=0;
-	    	$("tbody").children().each(function(){
+	    	var sonLength=$("tbody").children().length;
+	    	for (var i = 0; i < sonLength; i++) {
+	    		var sonObj=$("tbody").children()[i];
 	    		if (nRow>1) {
-	    			$(this).children().each(function(){
+	    			var feature={};	  
+	    			$(sonObj).children().each(function(){
 		    			var idAttr=$(this).attr("id");	    		
 						if (idAttr!=undefined) {
 							idAttr=idAttr.substring(0,idAttr.length-1)+'0';
@@ -225,10 +234,10 @@
 					});	
 					arrFeature.push(feature);	
 	    		}
-	    		nRow++; 
-
-			});	
+	    		nRow++; 	    		
+	    	}		
 	    	importData["features"]=arrFeature;
+	    	console.dir(importData);
 	    	var data = new FormData();
 	    		data.append('func', 'upData');
 				data.append('import_data',JSON.stringify(importData));

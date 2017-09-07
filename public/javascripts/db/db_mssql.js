@@ -201,7 +201,7 @@ sql.bulkInsert=function(table,func){
             new mssql.ConnectionPool(config).connect().then(pool => {
             // Query
                 const request = pool.request();
-                console.log("bulkInsert"+table)
+                //console.log("bulkInsert"+table)
                 request.bulk(table, (err, result) => {
                         // ... error checks 
                         func(err, result);
@@ -363,5 +363,47 @@ sql.queryViaStreamWithParams=function(sqltext,params,func){
 sql.queryViaStream=function(sqltext,func){
     sql.queryViaStreamWithParams(sqltext,null,func);
 };
+
+sql.transact=function(sqltext,func){
+
+    new mssql.ConnectionPool(config).connect().then(pool =>{
+        const transaction = pool.transaction();
+        transaction.begin(err => {
+        // ... error checks
+            if (err) {
+                
+                return func(err);
+            }
+            let rolledBack = false
+            
+            transaction.on('rollback', aborted => {
+                // emited with aborted === true 
+         
+                rolledBack = true
+            })
+            
+            new mssql.Request(transaction)
+            .query(sqltext, (err, result) => {
+                // insert should fail because of invalid value                 
+                if (err) {
+                    console.log("transact:err::"+err); 
+                    if (!rolledBack) {
+                        transaction.rollback(err => {
+                            // ... error checks
+                            func(err);                        
+                        })
+                    }
+                } else {
+                    transaction.commit(err => {
+                        // ... error checks 
+                    })                
+                }
+            })
+        })
+    })
+   
+
+}
+
 
 module.exports=sql;

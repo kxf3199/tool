@@ -61,8 +61,9 @@ router.post('/',multipartMiddleware,function(req, res, next) {
             insertDB(dataObj.table_name,dataObj,function(err,rs){
                 console.log(err);
                 console.log(rs);
+                 res.send("err");
             });
-            console.log(data);
+            //console.log(data);
              res.send("ok");
         }
         
@@ -132,6 +133,9 @@ function get_table_info(tabName,dbType,func)
 
 function insertDB(tabName,data,func){
     console.log("insertDB:"+tabName);
+
+    //bulk insert table, but now it's something wrong, wait to solve
+    /*   
     const table = mssql_hander.createTab(tabName);
     if (table) {
         //console.log(table);
@@ -144,33 +148,104 @@ function insertDB(tabName,data,func){
     //new mssql.Table('tabName') // or temporary table, e.g. #temptable 
     table.create = true;
     data.fields.forEach(function(o,p,q){//分别对应：数组元素，元素的索引，数组本身
-        var colName=o;
-        var colType=data.field_type[colName];
+        var colName=o.name;
+        var colType=o.type;
         if (colType=='numeric'||colType=='decimal'||colType=='smallint'||colType=='int') {
             colType=mssql.Int;
         }else if (colType=='varchar'||colType=='char') {
-            colType=mssql.NVarChar;
+            colType=mssql.NVarChar(parseInt(o.length));
         }else if (colType=='datetime'||colType=='date'||colType=='time') {
             colType=mssql.DateTime;
         }else if (colType=='binary'||colType=='varbinary') {
             colType=mssql.VarBinary;
         }else {
-            colType=mssql.NVarChar;
+            colType=mssql.NVarChar(parseInt(o.length));
         }
-        table.columns.add(colName, colType, {nullable: false})
+        if (colName==="F_ID"||colName==="f_id") {
+            table.columns.add(colName, colType, {nullable: false,primary: true});
+        }else
+            table.columns.add(colName, colType, {nullable: false});
+        
     });
     var features=data.features;
+    //console.dir(features);
     features.forEach(function(f,index,fs){//分别对应：数组元素，元素的索引，数组本身
         var args=[];
-        data.fields.forEach(function(o){
-            args.push(f.o);
-        });
+        //console.dir(f);
+        for (var i = 0; i < data.fields.length; i++) {
+            var name=data.fields[i].name;
+            var type=data.fields[i].type;
+            if(f[name]!=undefined)
+            {
+                var v=convertValue(f[name],type);
+                if (v!=undefined) {
+                    args.push(v);
+                }  
+            }            
+                      
+        }        
+        //console.log(args);
         table.rows.add(args);
     });
-    console.log(table);
+    //console.dir(table.rows);
     mssql_hander.bulkInsert(table,(err, result) => {
         // ... error checks  
         func(err,result);          
     });
+    */
+   //  transaction insert ,it's work
+    var features=data.features;
+    var insertSQL="insert Into "+tabName;
+    var sqlText='';
+    features.forEach(function(f,index,fs){//分别对应：数组元素，元素的索引，数组本身
+        var args=[];
+        //console.dir(f);
+        var insertField="(";
+        var insertValue="Values (";
+        for (var i = 0; i < data.fields.length; i++) {
+            var name=data.fields[i].name;
+            var type=data.fields[i].type;
+            if(f[name]!=undefined&&name!='invalid')
+            {
+                var v=convertValue(f[name],type);
+                if (v!=undefined) {
+                    insertField+=name;
+                    insertField+=",";
+                    insertValue+=v;
+                    insertValue+=","
+                }  
+            }            
+                      
+        }  
+        insertField=insertField.substring(0, insertField.length - 1);  
+        insertField+=")";
+        insertValue=insertValue.substring(0, insertValue.length - 1);  
+        insertValue+=")";
+        var strSql=insertSQL+insertField+insertValue;
+        console.log(strSql);
+        mssql_hander.transact(strSql,function(err,rs){
+            if (err) {
+                console.log(err);
+            }
+        });     
+        
+    });
+    
+
+    
+}
+
+function convertValue(value,type){
+    if (type=='numeric'||type=='decimal'||type=='smallint'||type=='int') {
+            return parseInt(value);
+        }else if (type=='varchar'||type=='char') {
+            return '\''+value+'\'';
+        }else if (type=='datetime'||type=='date'||type=='time') {
+            return new Date(temper.replace(/-/,"/")) ;
+        }else if (type=='binary'||type=='varbinary') {
+            return '\''+value+'\'';
+        }else {
+            return '\''+value+'\'';
+        }
 }
 module.exports = router;
